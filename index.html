@@ -67,11 +67,7 @@ label > input, label > select, label > textarea{font-weight:400;letter-spacing:0
 .iam{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;color:var(--text-secondary)}
 .iam .chips{display:flex;flex-wrap:wrap;gap:8px}
 
-.hero{display:grid;gap:12px}
-.hero .who{font-size:clamp(28px,7vw,48px);font-weight:600;line-height:1.2;text-wrap:balance}
-.hero .meta{display:flex;flex-wrap:wrap;gap:4px 20px;color:var(--text-secondary);font-size:13px}
-.hero .meta b{color:var(--black);font-weight:600}
-.hero .actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.hero{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
 .buy{display:grid;gap:2px;background:var(--bg-image);border-radius:var(--r-md);padding:12px 16px}
 .notice{color:var(--text-secondary);font-size:13px}
 .err{color:var(--error);font-size:13px}
@@ -187,18 +183,12 @@ details > *:not(summary){margin-top:12px}
 
   <section class="card alert" id="alert" hidden></section>
 
-  <section class="card hero" id="hero">
-    <span class="overline" id="hero-eyebrow">Neste brød</span>
-    <p class="who" id="who">Kobler til…</p>
-    <div class="meta" id="who-meta"></div>
-    <div class="buy" id="buy-note" hidden></div>
-    <div class="actions">
-      <button class="primary" id="btn-quick" type="button" hidden>Jeg kjøpte brød i dag</button>
-      <button id="btn-log" type="button" hidden>Registrer et brød…</button>
-      <button id="btn-remind" type="button" hidden>Kopier påminnelse</button>
-      <span class="notice" id="hero-note">Åpner klubbens felles logg.</span>
-    </div>
-  </section>
+  <div class="hero" id="hero">
+    <button class="primary" id="btn-quick" type="button" hidden>Jeg kjøpte brød i dag</button>
+    <button id="btn-log" type="button" hidden>Registrer et brød…</button>
+    <button id="btn-remind" type="button" hidden>Kopier påminnelse</button>
+    <span class="notice" id="hero-note">Åpner klubbens felles logg.</span>
+  </div>
 
   <form class="card form" id="log-form" hidden>
     <h3>Registrer et brød</h3>
@@ -497,65 +487,19 @@ details > *:not(summary){margin-top:12px}
   }
 
   function renderHero(){
-    const who = $('#who'), meta = $('#who-meta'), note = $('#hero-note'), eyebrow = $('#hero-eyebrow');
-    const bQuick = $('#btn-quick'), bLog = $('#btn-log'), bRem = $('#btn-remind'), buyNote = $('#buy-note');
-    const hideAll = () => { bQuick.hidden = bLog.hidden = bRem.hidden = true; buyNote.hidden = true; };
-    if (state.unavailable) { who.textContent = 'Logg inn for å se klubben'; meta.innerHTML = ''; note.textContent = 'Den felles loggen er bare synlig for innloggede medlemmer.'; hideAll(); return; }
+    const note = $('#hero-note');
+    const bQuick = $('#btn-quick'), bLog = $('#btn-log'), bRem = $('#btn-remind');
+    const hideAll = () => { bQuick.hidden = bLog.hidden = bRem.hidden = true; };
+    if (state.unavailable) { note.textContent = 'Den felles loggen er bare synlig for innloggede medlemmer.'; hideAll(); return; }
     if (!state.ready) return;
-    const ms = members();
-    if (!ms.length) { who.textContent = 'Ingen medlemmer ennå'; meta.innerHTML = ''; note.textContent = 'Åpne «Medlemmer og innstillinger» nederst og legg til alle.'; hideAll(); $('#settings').open = true; return; }
-    const st = stats();
-    const q = upcoming(st, 1);
-    if (!q.length) { who.textContent = 'Spiser ingen brød?'; meta.innerHTML = ''; note.textContent = 'Gi hvert medlem noen skiver per dag og noen kontordager.'; hideAll(); return; }
-    const next = q[0];
-    const p = plan();
-    const first = p.first;
-    const me = member(state.me);
-    const jd = new Date().getDay();
-    if (beforeStart()) {
-      const sd = startDate();
-      const daysLeft = Math.round((parseDate(sd) - startOfDay(new Date())) / 86400000);
-      eyebrow.textContent = 'Vi starter snart';
-      who.textContent = `Første brød ${DAY_LONG[parseDate(sd).getDay()]} ${fmtDate(sd).slice(4)}.`;
-      meta.innerHTML = `<span>Første tur: <b>${esc(first ? first.buyer.name : next.m.name)}</b></span><span>Om <b class="num">${daysLeft}</b> ${daysLeft === 1 ? 'dag' : 'dager'}</span><span>Regnskapet starter på null</span>`;
-      note.textContent = me ? (first && first.buyer.id === me.id ? `Det er du som kjøper det første brødet, ${me.name}.` : '') : 'Velg navnet ditt over, så vet du om du starter.';
-      const what0 = (state.settings && state.settings.whatToBuy || '').trim();
-      if (what0) { buyNote.hidden = false; buyNote.innerHTML = `<span class="overline">Hva som skal kjøpes</span><span>${esc(what0)}</span>`; } else buyNote.hidden = true;
-      bQuick.hidden = true; bLog.hidden = state.canWrite === false; bRem.hidden = !first;
-      if (state.flash) { note.textContent = state.flash; note.className = 'ok'; } else note.className = 'notice';
-      return;
-    }
-
-    if (me) {
-      const mine = first && first.buyer.id === me.id;
-      if (mine && first.today) { eyebrow.textContent = 'I dag'; who.textContent = `Din tur, ${me.name}!`; }
-      else if (mine) { eyebrow.textContent = 'Din neste tur'; who.textContent = `${cap(DAY_LONG[first.jsDay])}, ${me.name}.`; }
-      else if (first) { eyebrow.textContent = 'Ikke deg'; who.textContent = `${first.buyer.name} kjøper ${first.today ? 'i dag' : DAY_LONG[first.jsDay]}.`; }
-      else { eyebrow.textContent = 'Neste brød'; who.textContent = next.m.name; }
-      if (!inOffice(me, jd) && jd >= 1 && jd <= 5) note.textContent = `Du er ikke på kontoret på ${DAY_PL[jd]}, så ingen forventer noe av deg i dag.`;
-      else note.textContent = '';
-    } else {
-      eyebrow.textContent = first ? (first.today ? 'I dag' : 'Neste brød') : 'Neste brød';
-      who.textContent = first ? `${first.buyer.name} kjøper ${first.today ? 'i dag' : DAY_LONG[first.jsDay]}.` : next.m.name;
-      note.textContent = 'Velg navnet ditt over for å se om det er din tur.';
-    }
-    const b = next.balance;
-    const balTxt = Math.abs(b) < 0.05 ? 'à jour' : (b < 0 ? `${fmt1(-b)} brød bak` : `${fmt1(b)} brød foran`);
-    meta.innerHTML = `<span>Neste i køen: <b>${esc(next.m.name)}</b></span><span>Foretrekker <b>${esc(prefLabel(next.m))}</b></span><span>Ligger <b>${esc(balTxt)}</b></span>`;
-
-    const what = (state.settings && state.settings.whatToBuy || '').trim();
-    const buyerNotes = first ? (first.buyer.notes || '').trim() : '';
-    if (what || buyerNotes) {
-      buyNote.hidden = false;
-      buyNote.innerHTML = `<span class="overline">Hva som skal kjøpes</span>${what ? `<span>${esc(what)}</span>` : ''}${buyerNotes ? `<span class="notice">${esc(first.buyer.name)}: ${esc(buyerNotes)}</span>` : ''}`;
-    } else buyNote.hidden = true;
-
+    if (!members().length) { note.textContent = 'Ingen medlemmer ennå. Åpne «Medlemmer og innstillinger» nederst og legg til alle.'; hideAll(); $('#settings').open = true; return; }
+    if (!upcoming(stats(), 1).length) { note.textContent = 'Gi hvert medlem noen skiver per dag og noen kontordager.'; hideAll(); return; }
     const canWrite = state.canWrite !== false;
-    bQuick.hidden = !canWrite || state.editing || !me;
+    bQuick.hidden = !canWrite || state.editing || !member(state.me) || beforeStart();
     bLog.hidden = !canWrite || state.editing;
-    bRem.hidden = !first;
-    if (!canWrite) note.textContent = 'Du kan se loggen, men ikke legge til. Be eieren om bidragsyter-tilgang.';
-    if (state.flash) { note.textContent = state.flash; note.className = 'ok'; } else note.className = 'notice';
+    bRem.hidden = !plan().first;
+    note.className = state.flash ? 'ok' : 'notice';
+    note.textContent = state.flash || (canWrite ? '' : 'Du kan se loggen, men ikke legge til. Be eieren om bidragsyter-tilgang.');
   }
 
   function renderEat(){
