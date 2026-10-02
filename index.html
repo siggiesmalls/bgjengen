@@ -611,7 +611,7 @@ details > *:not(summary){margin-top:12px}
     const el = $('#stock');
     if (!state.ready) return;
     const e = stockEstimate();
-    if (!e) { el.innerHTML = beforeStart() ? `<p class="empty">Klubben starter ${esc(fmtDate(startDate()))}. Det første brødet som registreres, starter klokka.</p>` : '<p class="empty">Ingen brød registrert ennå. Det første som registreres, starter klokka.</p>'; return; }
+    if (!e) { el.innerHTML = '<p class="empty">Ingen brød registrert ennå.</p>'; return; }
     const sizeNote = e.slices !== slicesPerLoaf() ? ` (${e.slices} skiver)` : '';
     const ago = e.daysAgo === 0 ? 'i dag' : e.daysAgo === 1 ? 'i går' : `for ${e.daysAgo} dager siden`;
     let tone, dot, lbl, body;
@@ -626,7 +626,7 @@ details > *:not(summary){margin-top:12px}
     const el = $('#log');
     if (!state.ready) return;
     const sd = startDate();
-    if (!state.loaves.length) { el.innerHTML = `<li class="emptyl"><img src="${OUTLY_SEARCHING}" alt=""><span class="empty">Her var det tomt! Hvert brød dere registrerer, dukker opp her for alle tre.</span></li>`; return; }
+    if (!state.loaves.length) { el.innerHTML = `<li class="emptyl"><img src="${OUTLY_SEARCHING}" alt=""></li>`; return; }
     const canDel = state.canWrite !== false;
     el.innerHTML = state.loaves.slice(0, 60).map(l => `<li data-id="${esc(l.id)}">
       <div class="l"><span>${esc(nameOf(l.buyer))}${sd && l.date < sd ? ' <span class="chip">før start, teller ikke</span>' : ''}</span><small>${esc(fmtDate(l.date))}${l.slices && Number(l.slices) !== slicesPerLoaf() ? ` · ${esc(l.slices)} skiver` : ''}${l.note ? ' · ' + esc(l.note) : ''}</small></div>
