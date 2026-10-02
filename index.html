@@ -67,8 +67,9 @@ label > input, label > select, label > textarea{font-weight:400;letter-spacing:0
 
 .iam{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;color:var(--text-secondary)}
 .iam .chips{display:flex;flex-wrap:wrap;gap:8px}
+.iam .acts{display:flex;flex-wrap:wrap;gap:8px;margin-left:auto}
 
-.hero{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+#hero-note:empty{display:none}
 .buy{display:grid;gap:2px;background:var(--bg-image);border-radius:var(--r-md);padding:12px 16px}
 .notice{color:var(--text-secondary);font-size:13px}
 .err{color:var(--error);font-size:13px}
@@ -180,15 +181,15 @@ details > *:not(summary){margin-top:12px}
   <div class="iam" id="iam" hidden>
     <span>Jeg er</span>
     <div class="chips" id="iam-chips"></div>
+    <div class="acts">
+      <button class="primary" id="btn-quick" type="button" hidden>Jeg kjøpte brød i dag</button>
+      <button id="btn-log" type="button" hidden>+ Registrer et brød</button>
+    </div>
   </div>
 
   <section class="card alert" id="alert" hidden></section>
 
-  <div class="hero" id="hero">
-    <button class="primary" id="btn-quick" type="button" hidden>Jeg kjøpte brød i dag</button>
-    <button id="btn-log" type="button" hidden>Registrer et brød…</button>
-    <span class="notice" id="hero-note">Åpner klubbens felles logg.</span>
-  </div>
+  <div class="notice" id="hero-note">Åpner klubbens felles logg.</div>
 
   <form class="card form" id="log-form" hidden>
     <h3>Registrer et brød</h3>
@@ -465,7 +466,7 @@ details > *:not(summary){margin-top:12px}
     if (!state.ready || !ms.length) { box.hidden = true; return; }
     box.hidden = false;
     if (state.me && !member(state.me)) state.me = null;
-    $('#iam-chips').innerHTML = ms.map(m => `<button type="button" class="small pill${state.me === m.id ? ' sel' : ''}" data-me="${esc(m.id)}">${esc(m.name || 'Uten navn')}</button>`).join('') + `<button type="button" class="small pill${state.me ? '' : ' sel'}" data-me="">bare titter</button>`;
+    $('#iam-chips').innerHTML = `<button type="button" class="small pill${state.me ? '' : ' sel'}" data-me="">bare titter</button>` + ms.map(m => `<button type="button" class="small pill${state.me === m.id ? ' sel' : ''}" data-me="${esc(m.id)}">${esc(m.name || 'Uten navn')}</button>`).join('');
   }
 
   function renderAlert(){
