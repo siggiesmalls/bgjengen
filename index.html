@@ -273,10 +273,6 @@ details > *:not(summary){margin-top:12px}
     <ul class="log" id="log"></ul>
   </section>
 
-  <details id="rules-box">
-    <summary>Hva vi kjøper</summary>
-    <div class="how" id="rules">Ingenting skrevet ned ennå. Legg det inn under innstillinger, så slipper den som handler å gjette.</div>
-  </details>
 
   <details>
     <summary>Slik bestemmes turen</summary>
@@ -469,7 +465,7 @@ details > *:not(summary){margin-top:12px}
 
   // ---------- render ----------
   function render(){
-    renderIam(); renderAlert(); renderHero(); renderEat(); renderPlan(); renderBalances(); renderQueue(); renderStock(); renderLog(); renderRules(); renderSettings(); renderForm();
+    renderIam(); renderAlert(); renderHero(); renderEat(); renderPlan(); renderBalances(); renderQueue(); renderStock(); renderLog(); renderSettings(); renderForm();
   }
 
   function renderIam(){
@@ -632,15 +628,6 @@ details > *:not(summary){margin-top:12px}
       <div class="l"><span>${esc(nameOf(l.buyer))}${sd && l.date < sd ? ' <span class="chip">før start, teller ikke</span>' : ''}</span><small>${esc(fmtDate(l.date))}${l.slices && Number(l.slices) !== slicesPerLoaf() ? ` · ${esc(l.slices)} skiver` : ''}${l.note ? ' · ' + esc(l.note) : ''}</small></div>
       ${canDel ? '<button type="button" class="small del">Fjern</button>' : ''}
     </li>`).join('');
-  }
-
-  function renderRules(){
-    const el = $('#rules');
-    if (!state.ready) return;
-    const what = (state.settings && state.settings.whatToBuy || '').trim();
-    const notes = members().filter(m => (m.notes||'').trim());
-    if (!what && !notes.length) { el.innerHTML = 'Ingenting skrevet ned ennå. Legg det inn under innstillinger, så slipper den som handler å gjette.'; return; }
-    el.innerHTML = `${what ? `<p>${esc(what)}</p>` : ''}${notes.length ? `<ul class="rules">${notes.map(m => `<li><b>${esc(m.name)}</b>: ${esc(m.notes.trim())}</li>`).join('')}</ul>` : ''}`;
   }
 
   function renderForm(){
