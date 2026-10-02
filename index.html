@@ -9,7 +9,7 @@
 <title>B-gjengen</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: Outland app bar, then one column (max 640px) on bg-default. Personal status first, then the week plan, balances, upcoming order, latest loaf, log; rules and settings folded at the bottom.
+/* Layout: Outland app bar, then one column (max 960px) on bg-default. Personal status first, then the week plan, balances, upcoming order, latest loaf, log; rules and settings folded at the bottom.
    Single light theme by choice: the Outland design system has no dark theme (outland.no has none). Tokens from the Outland design system. */
 :root{
   --black:#000000; --white:#ffffff; --bg-default:#f9f9fa; --bg-image:#f6f6f6; --bg-button:#e5e5e5; --divider:#00000015;
@@ -28,11 +28,11 @@
 body{background:var(--bg-default);color:var(--black);font-family:var(--sans);font-size:14px;line-height:1.7;padding-inline:0;padding-block:0 60px;margin:0}
 
 .appbar{background:var(--black);color:var(--white);min-height:50px;display:flex;align-items:center;padding-inline:16px;padding-block:8px;position:sticky;top:env(safe-area-inset-top,0px);z-index:1100}
-.appbar .in{max-width:640px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.appbar .in{max-width:960px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px}
 .appbar img{height:16px;width:auto;display:block}
 .appbar .club{font-size:14px;font-weight:500;line-height:1.7;color:var(--white)}
 
-.wrap{max-width:640px;margin:0 auto;display:grid;gap:24px;padding-inline:16px;padding-block:24px 0}
+.wrap{max-width:960px;margin:0 auto;display:grid;gap:24px;padding-inline:16px;padding-block:24px 0}
 h1,h2,h3{margin:0;text-wrap:balance}
 h1{font-size:26px;font-weight:600;line-height:1.3}
 h2{font-size:20px;font-weight:500;line-height:1.5;margin-bottom:8px}
@@ -186,7 +186,6 @@ details > *:not(summary){margin-top:12px}
   <div class="hero" id="hero">
     <button class="primary" id="btn-quick" type="button" hidden>Jeg kjøpte brød i dag</button>
     <button id="btn-log" type="button" hidden>Registrer et brød…</button>
-    <button id="btn-remind" type="button" hidden>Kopier påminnelse</button>
     <span class="notice" id="hero-note">Åpner klubbens felles logg.</span>
   </div>
 
@@ -488,8 +487,8 @@ details > *:not(summary){margin-top:12px}
 
   function renderHero(){
     const note = $('#hero-note');
-    const bQuick = $('#btn-quick'), bLog = $('#btn-log'), bRem = $('#btn-remind');
-    const hideAll = () => { bQuick.hidden = bLog.hidden = bRem.hidden = true; };
+    const bQuick = $('#btn-quick'), bLog = $('#btn-log');
+    const hideAll = () => { bQuick.hidden = bLog.hidden = true; };
     if (state.unavailable) { note.textContent = 'Den felles loggen er bare synlig for innloggede medlemmer.'; hideAll(); return; }
     if (!state.ready) return;
     if (!members().length) { note.textContent = 'Ingen medlemmer ennå. Åpne «Medlemmer og innstillinger» nederst og legg til alle.'; hideAll(); $('#settings').open = true; return; }
@@ -497,7 +496,6 @@ details > *:not(summary){margin-top:12px}
     const canWrite = state.canWrite !== false;
     bQuick.hidden = !canWrite || state.editing || !member(state.me) || beforeStart();
     bLog.hidden = !canWrite || state.editing;
-    bRem.hidden = !plan().first;
     note.className = state.flash ? 'ok' : 'notice';
     note.textContent = state.flash || (canWrite ? '' : 'Du kan se loggen, men ikke legge til. Be eieren om bidragsyter-tilgang.');
   }
@@ -683,13 +681,6 @@ details > *:not(summary){margin-top:12px}
     return { slicesPerLoaf: spl, members: ms, whatToBuy: $('#s-buy').value.trim(), startDate: /^\d{4}-\d{2}-\d{2}$/.test(sdv) ? sdv : '' };
   }
 
-  function reminderText(){
-    const p = plan();
-    const f = p.first; if (!f) return '';
-    const what = (state.settings && state.settings.whatToBuy || '').trim();
-    return `🍞 B-gjengen: ${f.buyer.name} kjøper ${beforeStart() ? 'det første brødet' : 'neste brød'} ${f.today ? 'i dag' : DAY_LONG[f.jsDay]}${f.today ? '' : ' (' + fmtDate(f.date) + ')'}.${what ? ' ' + what + '.' : ''} Registrer det i appen når det er gjort.`;
-  }
-
   async function saveLoaf(buyer, date, slices, note){
     await state.db.collection('loaves').add({ buyer, date, slices, note, createdAt: new Date().toISOString() });
   }
@@ -750,12 +741,6 @@ details > *:not(summary){margin-top:12px}
     try { await saveLoaf(state.me, localDate(), slicesPerLoaf(), ''); flash('Registrert. Takk, ' + nameOf(state.me) + '!'); }
     catch (ex) { flash(''); $('#hero-note').textContent = ex && ex.code === 'permission-denied' ? NO_ACCESS : SAVE_FAIL; if (ex && ex.code === 'permission-denied') { state.canWrite = false; render(); } }
     finally { btn.disabled = false; }
-  });
-  $('#btn-remind').addEventListener('click', () => {
-    const t = reminderText(); if (!t) return;
-    const done = () => flash('Påminnelse kopiert. Lim den inn i chatten.');
-    try { navigator.clipboard.writeText(t).then(done).catch(() => { $('#hero-note').textContent = t; }); }
-    catch (_) { $('#hero-note').textContent = t; }
   });
 
   $('#log-form').addEventListener('submit', async e => {
