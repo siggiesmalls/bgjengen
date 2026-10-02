@@ -303,6 +303,8 @@ details > *:not(summary){margin-top:12px}
   </details>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
 <script>
 (function(){
   const $ = s => document.querySelector(s);
@@ -772,7 +774,7 @@ details > *:not(summary){margin-top:12px}
     if (!state.db || !state.me) return;
     const btn = $('#eat-save'); btn.disabled = true; const note = $('#eat-note'); note.className = 'notice'; note.textContent = '';
     try { await saveSlices(state.me, localDate(), state.eatVal||0); state.eatEditing = false; note.className = 'ok'; note.textContent = 'Registrert!'; setTimeout(() => { note.textContent = ''; }, 3000); }
-    catch (ex) { note.className = 'err'; note.textContent = ex && ex.code === 'invalid_argument' ? NO_ACCESS : SAVE_FAIL; }
+    catch (ex) { note.className = 'err'; note.textContent = ex && ex.code === 'permission-denied' ? NO_ACCESS : SAVE_FAIL; }
     finally { btn.disabled = false; }
   });
   $('#late-form').addEventListener('submit', async e => {
@@ -784,7 +786,7 @@ details > *:not(summary){margin-top:12px}
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date > localDate()) { err.textContent = 'Velg en dato som har vært.'; return; }
     if (!(n >= 0)) { err.textContent = 'Skriv antall skiver.'; return; }
     try { await saveSlices(who, date, n); err.className = 'ok'; err.textContent = `Lagret: ${nameOf(who)}, ${n} skiver ${fmtDate(date)}.`; $('#l-slices').value = ''; }
-    catch (ex) { err.textContent = ex && ex.code === 'invalid_argument' ? NO_ACCESS : SAVE_FAIL; }
+    catch (ex) { err.textContent = ex && ex.code === 'permission-denied' ? NO_ACCESS : SAVE_FAIL; }
   });
 
   // ---------- events ----------
@@ -802,7 +804,7 @@ details > *:not(summary){margin-top:12px}
     if (!state.db || !state.me) return;
     const btn = $('#btn-quick'); btn.disabled = true;
     try { await saveLoaf(state.me, localDate(), slicesPerLoaf(), ''); flash('Registrert. Takk, ' + nameOf(state.me) + '!'); }
-    catch (ex) { flash(''); $('#hero-note').textContent = ex && ex.code === 'invalid_argument' ? NO_ACCESS : SAVE_FAIL; if (ex && ex.code === 'invalid_argument') { state.canWrite = false; render(); } }
+    catch (ex) { flash(''); $('#hero-note').textContent = ex && ex.code === 'permission-denied' ? NO_ACCESS : SAVE_FAIL; if (ex && ex.code === 'permission-denied') { state.canWrite = false; render(); } }
     finally { btn.disabled = false; }
   });
   $('#btn-remind').addEventListener('click', () => {
@@ -827,8 +829,8 @@ details > *:not(summary){margin-top:12px}
       await saveLoaf(buyer, date, slices, note);
       state.editing = false; $('#log-form').hidden = true; flash('Registrert.');
     } catch (ex) {
-      err.textContent = ex && ex.code === 'invalid_argument' ? NO_ACCESS : SAVE_FAIL;
-      if (ex && ex.code === 'invalid_argument') { state.canWrite = false; render(); }
+      err.textContent = ex && ex.code === 'permission-denied' ? NO_ACCESS : SAVE_FAIL;
+      if (ex && ex.code === 'permission-denied') { state.canWrite = false; render(); }
     } finally { btn.disabled = false; }
   });
 
@@ -866,18 +868,27 @@ details > *:not(summary){margin-top:12px}
       state.settingsDirty = false; state.settingsJson = '';
       state.settings = s; render();
     } catch (ex) {
-      err.textContent = ex && ex.code === 'invalid_argument' ? 'Du har ikke skrivetilgang til innstillingene.' : SAVE_FAIL;
+      err.textContent = ex && ex.code === 'permission-denied' ? 'Du har ikke skrivetilgang til innstillingene.' : SAVE_FAIL;
     } finally { btn.disabled = false; }
   });
 
   // ---------- boot ----------
+  // Firebase web config (public by design; what is allowed is decided by firestore.rules).
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyCbB7KW9oE_-NRjYUMD5571PDi0Db-eLqo",
+    authDomain: "b-gjengen.firebaseapp.com",
+    projectId: "b-gjengen",
+    storageBucket: "b-gjengen.firebasestorage.app",
+    messagingSenderId: "96837525078",
+    appId: "1:96837525078:web:a2eef1aa4646cf16ac65f7"
+  };
+
   async function boot(){
-    const use = window.claude && window.claude.use;
-    if (!use) { state.unavailable = true; render(); return; }
-    const db = await window.claude.use('db');
-    if (!db) { state.unavailable = true; render(); return; }
+    if (!FIREBASE_CONFIG || !window.firebase) { state.unavailable = true; render(); return; }
+    firebase.initializeApp(FIREBASE_CONFIG);
+    const db = firebase.firestore();
     state.db = db;
-    try { const user = await window.claude.use('user'); state.canWrite = user ? await user.can('data.write') : null; } catch (_) { state.canWrite = null; }
+    state.canWrite = true;
     let gotSettings = false, gotLoaves = false, gotSlices = false;
     const maybeReady = () => { if (gotSettings && gotLoaves && gotSlices) { state.ready = true; render(); } };
     const lost = () => { $('#hero-note').textContent = 'Mistet kontakten med den felles loggen. Last siden på nytt.'; };

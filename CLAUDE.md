@@ -7,47 +7,30 @@ GitHub Pages.
 
 ## Status of this repo
 
-- `index.html` is the complete app as exported from the artifact. UI, logic and
-  styling are done and should not be redesigned.
-- **It does not work yet outside the artifact** for two reasons, both at the
-  bottom of `index.html` in `boot()`:
-  1. Shared storage used `window.claude.use('db')` — a Firestore-style document
-     store that only exists inside claude.ai artifacts. Outside it, `boot()`
-     sets `state.unavailable = true` and the page shows "Logg inn for å se klubben".
-  2. `window.claude.use('user')` was used for `canWrite`. Outside, treat
-     everyone as a writer (`state.canWrite = true`).
-- Images are already local under `assets/`.
+- `index.html` is the complete app, ported from the claude.ai artifact. UI, logic
+  and styling are done and should not be redesigned.
+- It is live at https://siggiesmalls.github.io/bgjengen/ and the three members
+  share one log in Firebase Firestore (project `b-gjengen`, location `eur3`).
+- Images are local under `assets/`.
 
-## The job
+## Storage
 
-Replace the storage layer so the three members share one live log on GitHub Pages.
-
-### Recommended: Firebase Firestore (free tier)
-The existing code is written against an API that is nearly identical to the
-Firestore web SDK (`doc`, `collection`, `get/set/update/delete`, `onSnapshot`,
-`where/orderBy/limit`, `snap.exists`, `snap.data()`, `snap.docs`), so the port
-is mostly wiring:
-
-- Load the Firebase compat or modular SDK from the CDN (no build step; the page
-  must stay a single static file plus `assets/`).
-- In `boot()`, replace `await window.claude.use('db')` with the Firestore
-  instance, and keep the three subscriptions as they are:
+- The Firebase compat SDK (app + firestore) is loaded from the gstatic CDN; there
+  is no build step and the page must stay a single static file plus `assets/`.
+- `boot()` at the bottom of `index.html` holds `FIREBASE_CONFIG` and the three
+  subscriptions:
   - `club/settings` (one document: members, slicesPerLoaf, startDate, whatToBuy)
   - `loaves` collection (buyer, date YYYY-MM-DD, slices, note, createdAt)
   - `slices` collection, doc id `<date>_<memberId>` (member, date, slices, updatedAt)
-- `exists` is a property in the artifact API; in the Firestore SDK it is
-  `snap.exists()` (modular) or `snap.exists` (compat). Pick compat to minimise
-  edits, or adapt the two call sites.
-- Error handling branches on `ex.code === 'invalid_argument'` for "no write
-  access"; map Firestore's `permission-denied` to the same path.
-- Auth: simplest is Firebase anonymous auth plus a shared club passphrase
-  checked in security rules via a custom claim or a `club/secret` doc — or, since
-  this is three people and nothing sensitive, open rules restricted to the
-  Pages origin via App Check. Keep it simple; the owner is an IT PM and can set
-  up the Firebase project herself if given exact steps.
+- No login, by the owner's choice: everyone is a writer (`state.canWrite = true`)
+  and members pick who they are with "Jeg er …". `firestore.rules` is the copy
+  of the published rules: open read/write on exactly those three paths. Rules
+  are published by hand in the Firebase console.
+- A write that Firestore rejects with `permission-denied` shows the "no write
+  access" messages.
 
 ### Seed data
-Create `club/settings` with:
+`club/settings` was created with:
 ```json
 {"slicesPerLoaf":20,"startDate":"2026-10-05","whatToBuy":"",
  "members":[
