@@ -66,12 +66,18 @@ label > input, label > select, label > textarea{font-weight:400;letter-spacing:0
 @media (max-width:460px){.card{padding:16px}}
 
 .top{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center}
-.iam{flex:1 1 420px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;color:var(--text-secondary)}
-.iam .chips{display:flex;flex-wrap:wrap;gap:8px}
-.iam .acts{display:flex;flex-wrap:wrap;gap:8px;margin-left:auto}
+.top header{flex:0 0 auto}
+/* Three tiers: (1) everything on one row when it fits; (2) otherwise the Jeg er row drops to its own full-width line as a whole, never half-wrapped; (3) narrow: stack and stretch the button. */
+.iam{flex:1 1 auto;min-width:0;display:flex;flex-wrap:nowrap;gap:8px;align-items:center;font-size:13px;color:var(--text-secondary)}
+.iam .who{display:flex;flex-wrap:nowrap;gap:8px;align-items:center;white-space:nowrap}
+.iam .chips{display:contents}
+.iam .acts{display:flex;flex-wrap:nowrap;gap:8px;margin-left:auto}
+@media (max-width:960px){
+  .top{flex-direction:column;align-items:stretch}
+  .iam{flex-wrap:wrap}
+  .iam .who{flex-wrap:wrap;white-space:normal}
+}
 @media (max-width:700px){
-  .top{flex-direction:column;align-items:stretch;gap:12px}
-  .iam{flex:0 0 auto}
   .iam .acts{flex-basis:100%;margin-left:0}
   .iam .acts button{flex:1 1 auto}
 }
@@ -186,8 +192,7 @@ details > *:not(summary){margin-top:12px}
       <p class="sub">Hovedkvarteret til Outland sin brødklubb</p>
     </header>
     <div class="iam" id="iam" hidden>
-      <span>Jeg er</span>
-      <div class="chips" id="iam-chips"></div>
+      <div class="who"><span>Jeg er</span><div class="chips" id="iam-chips"></div></div>
       <div class="acts">
         <button class="primary" id="btn-quick" type="button" hidden>Jeg kjøpte brød i dag</button>
         <button id="btn-log" type="button" hidden>+ Registrer et brød</button>
