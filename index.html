@@ -151,6 +151,16 @@ ol.queue li small{font-size:11px;opacity:.75}
 .sl-table td.est{color:var(--dim-gray)}
 .sl-table td.tod{background:var(--primary-light)}
 .sl-wrap{overflow-x:auto}
+.sl-table .dt{margin-left:.35em}
+@media (max-width:600px){
+  .sl-wrap{overflow-x:visible}
+  .sl-table{table-layout:fixed;width:100%;font-size:12px}
+  .sl-table th,.sl-table td{padding:6px 2px}
+  .sl-table th:first-child,.sl-table td:first-child{width:27%;overflow-wrap:anywhere;font-size:12px}
+  .sl-table th:last-child,.sl-table td:last-child{width:11%}
+  .sl-table th{font-size:10px;letter-spacing:.02em}
+  .sl-table .dt{display:block;margin-left:0;font-size:9px;font-weight:400;text-transform:none;color:var(--dim-gray)}
+}
 .late{display:flex;flex-wrap:wrap;gap:8px;align-items:end}
 .late label{flex:1 1 120px}
 .late label.n{flex:0 1 90px}
@@ -534,7 +544,7 @@ details > *:not(summary){margin-top:12px}
     const monday = addDays(startOfDay(now), -((now.getDay()+6)%7));
     const days = WEEKDAYS.map(d => addDays(monday, d-1));
     const sd = startDate();
-    const head = `<tr><th></th>${days.map(d => `<th>${DAY_SHORT[d.getDay()]} ${pad(d.getDate())}.${pad(d.getMonth()+1)}.</th>`).join('')}<th>Sum</th></tr>`;
+    const head = `<tr><th></th>${days.map(d => `<th>${DAY_SHORT[d.getDay()]}<span class="dt">${pad(d.getDate())}.${pad(d.getMonth()+1)}.</span></th>`).join('')}<th>Sum</th></tr>`;
     const rows = members().map(m => {
       let sum = 0;
       const cells = days.map(d => {
