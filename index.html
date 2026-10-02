@@ -1,0 +1,901 @@
+<!doctype html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>html{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif;background:#f9f9fa}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>B-gjengen</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: Outland app bar, then one column (max 640px) on bg-default. Personal status first, then the week plan, balances, upcoming order, latest loaf, log; rules and settings folded at the bottom.
+   Single light theme by choice: the Outland design system has no dark theme (outland.no has none). Tokens from the Outland design system. */
+:root{
+  --black:#000000; --white:#ffffff; --bg-default:#f9f9fa; --bg-image:#f6f6f6; --bg-button:#e5e5e5; --divider:#00000015;
+  --text-secondary:#717171; --dim-gray:#777777;
+  --primary:#35a581; --primary-dark:#2a8568; --primary-light:#d7ede6;
+  --deep-teal:#005a4a; --deep-teal-light:#33796c; --teal:#006b6b;
+  --member:#de3247; --member-light:#ffe3e5;
+  --stock-in:#01d26a; --success:#005605; --error:#c90019; --warning:#ed6c02; --release:#8d7100; --info-dark:#3452c1;
+  --fb-error:#c900191a; --fb-warning:#ed6c021a; --fb-success:#0056051a; --fb-info:#5c78e51a;
+  --input-border:#999999; --control-border:#dddddd;
+  --r-xs:3px; --r-sm:4px; --r-md:8px; --r-lg:12px; --r-pill:999px;
+  --sans:Poppins,"Poppins Fallback",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{background:var(--bg-default);color:var(--black);font-family:var(--sans);font-size:14px;line-height:1.7;padding-inline:0;padding-block:0 60px;margin:0}
+
+.appbar{background:var(--black);color:var(--white);min-height:50px;display:flex;align-items:center;padding-inline:16px;padding-block:8px;position:sticky;top:env(safe-area-inset-top,0px);z-index:1100}
+.appbar .in{max-width:640px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.appbar img{height:16px;width:auto;display:block}
+.appbar .club{font-size:14px;font-weight:500;line-height:1.7;color:var(--white)}
+
+.wrap{max-width:640px;margin:0 auto;display:grid;gap:24px;padding-inline:16px;padding-block:24px 0}
+h1,h2,h3{margin:0;text-wrap:balance}
+h1{font-size:26px;font-weight:600;line-height:1.3}
+h2{font-size:20px;font-weight:500;line-height:1.5;margin-bottom:8px}
+h3{font-size:18px;font-weight:600;line-height:1.5}
+p{margin:0}
+.sub{color:var(--text-secondary);font-size:13px}
+.overline{font-size:12px;line-height:1.2;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--text-secondary)}
+.num{font-variant-numeric:tabular-nums}
+a{color:var(--deep-teal);text-decoration:underline dotted 2px;text-underline-offset:3px}
+a:hover{text-decoration:underline solid 3px}
+
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:var(--bg-button);color:var(--black);border-radius:var(--r-md);padding:8px 12px;font-size:14px;font-weight:500;line-height:1.75}
+button.primary{background:var(--primary-dark);color:var(--white);font-weight:600;padding:10px 20px}
+button.primary:hover{background:var(--deep-teal)}
+button.black{background:var(--black);color:var(--white)}
+button.small{padding:4px 10px;font-size:13px}
+button.pill{border-radius:var(--r-pill)}
+button.danger{background:var(--fb-error);color:var(--error)}
+button.sel{background:var(--black);color:var(--white)}
+button:disabled{opacity:.5;cursor:default}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+input,select,textarea{border:0;box-shadow:inset 0 0 0 1px var(--input-border);background:var(--white);border-radius:var(--r-md);padding:10px 12px;min-width:0;width:100%;line-height:1.4}
+input[type="checkbox"]{width:auto;box-shadow:none;accent-color:var(--teal)}
+textarea{resize:vertical;min-height:64px}
+label{display:grid;gap:4px;font-size:14px;font-weight:600;letter-spacing:.28px;line-height:1.4;min-width:0}
+label > input, label > select, label > textarea{font-weight:400;letter-spacing:0}
+
+.card{background:var(--white);border:1px solid var(--divider);border-radius:var(--r-lg);padding:24px}
+@media (max-width:460px){.card{padding:16px}}
+
+.iam{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;color:var(--text-secondary)}
+.iam .chips{display:flex;flex-wrap:wrap;gap:8px}
+
+.hero{display:grid;gap:12px}
+.hero .who{font-size:clamp(28px,7vw,48px);font-weight:600;line-height:1.2;text-wrap:balance}
+.hero .meta{display:flex;flex-wrap:wrap;gap:4px 20px;color:var(--text-secondary);font-size:13px}
+.hero .meta b{color:var(--black);font-weight:600}
+.hero .actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.buy{display:grid;gap:2px;background:var(--bg-image);border-radius:var(--r-md);padding:12px 16px}
+.notice{color:var(--text-secondary);font-size:13px}
+.err{color:var(--error);font-size:13px}
+.ok{color:var(--success);font-size:13px}
+
+.alert{display:flex;gap:16px;align-items:center}
+.alert img{width:96px;height:auto;flex:0 0 auto}
+.alert .t{display:grid;gap:8px;min-width:0}
+.alert .t b{font-size:18px;font-weight:600;line-height:1.4}
+.alert .actions{display:flex;flex-wrap:wrap;gap:8px}
+
+.form{display:grid;gap:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px 24px}
+@media (max-width:460px){.grid2{grid-template-columns:1fr}}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+
+.week{display:grid;gap:8px}
+.week .lbl{margin-top:6px}
+.week .lbl:first-child{margin-top:0}
+.week .wk{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.week .cell{border:1px solid var(--divider);border-radius:var(--r-md);padding:8px 6px;min-width:0;display:grid;gap:2px;background:var(--white);font-size:12px;line-height:1.35}
+.week .cell .d{color:var(--text-secondary);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.week .cell .n{font-weight:600;overflow-wrap:anywhere}
+.week .cell.buy{border-color:var(--deep-teal);background:var(--deep-teal);color:var(--white)}
+.week .cell.buy .d,.week .cell.buy .s{color:var(--white);opacity:.85}
+.week .cell.today{box-shadow:0 0 0 2px var(--primary)}
+.week .cell.past{opacity:.5}
+.week .cell .s{font-size:11px;color:var(--text-secondary)}
+.week .lbl{font-size:12px;font-weight:500;color:var(--text-secondary)}
+
+.bal{display:grid}
+.bal .item{display:grid;gap:6px;padding-block:12px;border-top:1px solid var(--divider)}
+.bal .item:first-child{border-top:0;padding-top:0}
+.bal .item:last-child{padding-bottom:0}
+.bal .head{display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap}
+.bal .name{font-weight:600;font-size:15px}
+.bal .figs{color:var(--text-secondary);font-size:13px;display:flex;gap:14px;flex-wrap:wrap}
+.chip{display:inline-block;padding:1px 8px;border-radius:var(--r-xs);font-size:11.5px;font-weight:500;line-height:1.6;background:var(--bg-button);color:var(--black)}
+.chip.behind{background:var(--fb-error);color:var(--error)}
+.chip.ahead{background:var(--fb-success);color:var(--success)}
+.chip.you{background:var(--member-light);color:var(--member)}
+.bar{position:relative;height:8px;border-radius:var(--r-sm);background:var(--bg-button)}
+.bar .fill{position:absolute;inset:0 auto 0 0;background:var(--primary);border-radius:var(--r-sm)}
+.bar .tick{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--black)}
+.legend{font-size:11px;line-height:1.6;color:var(--text-secondary);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:-1px;margin-right:4px}
+
+ol.queue{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:8px}
+ol.queue li{border:1px solid var(--divider);border-radius:var(--r-md);padding:6px 12px;background:var(--white);display:grid;min-width:0;line-height:1.5}
+ol.queue li:first-child{border-color:var(--black);background:var(--black);color:var(--white)}
+ol.queue li small{font-size:11px;opacity:.75}
+
+.stock{display:flex;gap:10px;align-items:flex-start}
+.eat{display:grid;gap:12px}
+.stepper{display:inline-flex;align-items:center;gap:0;border:1px solid var(--control-border);border-radius:var(--r-md);overflow:hidden;background:var(--white)}
+.stepper button{border-radius:0;background:var(--white);padding:6px 14px;font-size:18px;line-height:1;font-weight:500}
+.stepper button:hover{background:var(--bg-button)}
+.stepper .v{min-width:44px;text-align:center;font-weight:600;font-size:18px;font-variant-numeric:tabular-nums}
+.eat .today{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:13px;color:var(--text-secondary)}
+.eat .today b{color:var(--black);font-weight:600}
+.sl-table{width:100%;border-collapse:collapse;font-size:13px}
+.sl-table th,.sl-table td{padding:6px 4px;text-align:center;border-top:1px solid var(--divider);font-variant-numeric:tabular-nums}
+.sl-table th{color:var(--text-secondary);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-top:0}
+.sl-table td:first-child,.sl-table th:first-child{text-align:left;font-weight:600;color:var(--black)}
+.sl-table td.est{color:var(--dim-gray)}
+.sl-table td.tod{background:var(--primary-light)}
+.sl-wrap{overflow-x:auto}
+.late{display:flex;flex-wrap:wrap;gap:8px;align-items:end}
+.late label{flex:1 1 120px}
+.late label.n{flex:0 1 90px}
+.stock .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;margin-top:9px}
+.stock .lbl{font-weight:600}
+.stock .in{color:var(--success)}.stock .soon{color:var(--release)}.stock .out{color:var(--error)}
+
+ul.log{margin:0;padding:0;list-style:none;display:grid}
+ul.log li{display:flex;justify-content:space-between;gap:12px;align-items:center;padding-block:10px;border-top:1px solid var(--divider);flex-wrap:wrap}
+ul.log li:first-child{border-top:0;padding-top:0}
+ul.log li:last-child{padding-bottom:0}
+ul.log .l{display:grid;min-width:0;line-height:1.5}
+ul.log .l small{color:var(--text-secondary);font-size:13px}
+.empty{color:var(--text-secondary)}
+.emptyl{display:flex;gap:16px;align-items:center}
+.emptyl img{width:88px;height:auto}
+ul.rules{margin:0;padding-left:1.2em;display:grid;gap:4px}
+
+details{background:var(--white);border:1px solid var(--divider);border-radius:var(--r-md);padding:12px 16px}
+summary{cursor:pointer;font-weight:500;font-size:14px;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"";width:8px;height:8px;border-right:1px solid var(--black);border-bottom:1px solid var(--black);transform:rotate(45deg);flex:0 0 auto;margin-right:4px}
+details[open] summary::after{transform:rotate(-135deg)}
+details > *:not(summary){margin-top:12px}
+.members{display:grid;gap:16px}
+.member{display:grid;gap:12px;padding:16px;border:1px solid var(--divider);border-radius:var(--r-lg);background:var(--bg-default)}
+.days{display:flex;flex-wrap:wrap;gap:8px}
+.days label{flex-direction:row;display:flex;align-items:center;gap:6px;border:1px solid var(--control-border);background:var(--white);border-radius:var(--r-md);padding:4px 10px;font-weight:400;letter-spacing:0;font-size:13px}
+.settings-foot{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.how{display:grid;gap:8px;color:var(--black);max-width:62ch}
+@media (prefers-reduced-motion: no-preference){ .bar .fill{transition:width .3s ease} }
+</style>
+
+<div class="appbar"><div class="in"><img src="assets/outland-wordmark-white.svg" alt="Outland"><span class="club">B-gjengen</span></div></div>
+
+<div class="wrap">
+  <header>
+    <h1>B-gjengen</h1>
+    <p class="sub">Hovedkvarteret til Outland sin brødklubb</p>
+  </header>
+
+  <div class="iam" id="iam" hidden>
+    <span>Jeg er</span>
+    <div class="chips" id="iam-chips"></div>
+  </div>
+
+  <section class="card alert" id="alert" hidden></section>
+
+  <section class="card hero" id="hero">
+    <span class="overline" id="hero-eyebrow">Neste brød</span>
+    <p class="who" id="who">Kobler til…</p>
+    <div class="meta" id="who-meta"></div>
+    <div class="buy" id="buy-note" hidden></div>
+    <div class="actions">
+      <button class="primary" id="btn-quick" type="button" hidden>Jeg kjøpte brød i dag</button>
+      <button id="btn-log" type="button" hidden>Registrer et brød…</button>
+      <button id="btn-remind" type="button" hidden>Kopier påminnelse</button>
+      <span class="notice" id="hero-note">Åpner klubbens felles logg.</span>
+    </div>
+  </section>
+
+  <form class="card form" id="log-form" hidden>
+    <h3>Registrer et brød</h3>
+    <div class="grid2">
+      <label>Kjøpt av <select id="f-buyer"></select></label>
+      <label>Dato <input type="date" id="f-date"></label>
+      <label>Skiver i brødet <input type="number" id="f-slices" min="1" max="60" step="1"></label>
+      <label>Notat (valgfritt) <input type="text" id="f-note" placeholder="Grovbrød, halvt brød, …" maxlength="80"></label>
+    </div>
+    <div class="row">
+      <button type="button" class="small" id="f-yesterday">Glemte å registrere gårsdagens</button>
+    </div>
+    <div class="row">
+      <button class="primary" type="submit" id="f-save">Lagre brød</button>
+      <button type="button" id="f-cancel">Avbryt</button>
+      <span class="err" id="f-err"></span>
+    </div>
+  </form>
+
+  <section class="card eat" id="eat" hidden>
+    <h2>Skiver i dag</h2>
+    <div class="row" id="eat-me" hidden>
+      <span id="eat-label"></span>
+      <div class="stepper"><button type="button" id="eat-minus" aria-label="Færre">−</button><span class="v" id="eat-val">0</span><button type="button" id="eat-plus" aria-label="Flere">+</button></div>
+      <button type="button" class="primary" id="eat-save">Lagre</button>
+      <span class="notice" id="eat-note"></span>
+    </div>
+    <p class="notice" id="eat-hint" hidden>Velg navnet ditt øverst for å registrere hva du spiste.</p>
+    <p class="notice" id="eat-pre" hidden>Klubben starter ikke før startdatoen. Du kan øve deg nå, men skiver før start teller ikke i regnskapet.</p>
+    <div class="today" id="eat-today"></div>
+    <div class="sl-wrap"><table class="sl-table" id="sl-table"></table></div>
+    <p class="legend">Tall i grått er antatt (vanlig forbruk), ikke registrert. Regnskapet og brødanslaget bruker det som er registrert.</p>
+    <details id="late-box">
+      <summary>Glemte en dag? Registrer i etterkant</summary>
+      <form class="late" id="late-form">
+        <label>Hvem <select id="l-who"></select></label>
+        <label>Dato <input type="date" id="l-date"></label>
+        <label class="n">Skiver <input type="number" id="l-slices" min="0" max="30" step="1"></label>
+        <button type="submit" class="small">Lagre</button>
+        <span class="err" id="l-err"></span>
+      </form>
+    </details>
+  </section>
+
+  <section>
+    <h2>Planen</h2>
+    <div class="week" id="week"></div>
+    <p class="legend" id="week-note"></p>
+  </section>
+
+  <section class="card">
+    <h2>Regnskapet</h2>
+    <div class="bal" id="balances"><p class="empty">Venter på loggen…</p></div>
+    <p class="legend"><i style="background:var(--primary)"></i>brød kjøpt &nbsp; <i style="background:var(--black)"></i>rettferdig andel så langt</p>
+  </section>
+
+  <section>
+    <h2>Rekkefølgen framover</h2>
+    <ol class="queue" id="queue"></ol>
+  </section>
+
+  <section class="card">
+    <h2>Siste brød</h2>
+    <div id="stock" class="stock"><p class="empty">Ingen brød registrert ennå.</p></div>
+  </section>
+
+  <section class="card">
+    <h2>Logg</h2>
+    <ul class="log" id="log"></ul>
+  </section>
+
+  <details id="rules-box">
+    <summary>Hva vi kjøper</summary>
+    <div class="how" id="rules">Ingenting skrevet ned ennå. Legg det inn under innstillinger, så slipper den som handler å gjette.</div>
+  </details>
+
+  <details>
+    <summary>Slik bestemmes turen</summary>
+    <div class="how">
+      <p>Hver persons andel er skivene de spiser per uke delt på klubbens totale forbruk. Hvert brød teller som én tur. Den som ligger lengst under sin rettferdige andel, kjøper neste. Ved likt står den som har kjøpt færrest først, deretter den som kjøpte for lengst siden.</p>
+      <p>Foretrukne dager avgjør bare <em>når</em> i uka, aldri <em>hvem</em>. Planen legger et kjøp på noens foretrukne dag når brødet er i ferd med å ta slutt, og på neste kontordag når det allerede er tomt.</p>
+      <p><b>Vi kjøper aldri brød på fredag.</b> Blir det for lite til fredagslunsjen, legger planen kjøpet på torsdag i stedet, så ingen sitter med et nesten helt brød over helga.</p>
+      <p>Andelen regnes ut fra skivene hver enkelt faktisk har registrert siden start. Dager uten registrering teller med personens vanlige forbruk, så en glemt dag ødelegger ingenting. Før noen har registrert noe, brukes de vanlige tallene.</p>
+      <p>Regnskapet nullstilles aldri. Kjøper noen to ganger på rad, tar planen det igjen senere. Å registrere et brød i etterkant (med riktig dato) er helt greit og holder tallene ærlige.</p>
+    </div>
+  </details>
+
+  <details id="settings">
+    <summary>Medlemmer og innstillinger</summary>
+    <p class="notice" id="settings-note"></p>
+    <div class="members" id="members"></div>
+    <div class="settings-foot">
+      <button type="button" id="s-add" class="small">Legg til medlem</button>
+      <label style="flex-direction:row;display:flex;align-items:center;gap:8px">Skiver per brød <input type="number" id="s-spl" min="1" max="60" step="1" style="width:80px"></label>
+    </div>
+    <label>Startdato (brød før denne datoen teller ikke i regnskapet)<input type="date" id="s-start"></label>
+    <label>Hva vi kjøper (merke, type, oppskåret eller ikke, hvor)<textarea id="s-buy" maxlength="400" placeholder="f.eks. Kneippbrød, grovt, oppskåret, fra Rema på hjørnet"></textarea></label>
+    <div class="settings-foot">
+      <button type="button" class="primary" id="s-save">Lagre innstillinger</button>
+      <span class="err" id="s-err"></span>
+    </div>
+  </details>
+</div>
+
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const DAY_LONG = ['søndag','mandag','tirsdag','onsdag','torsdag','fredag','lørdag'];
+  const DAY_SHORT = ['søn','man','tir','ons','tor','fre','lør'];
+  const DAY_PL = ['søndager','mandager','tirsdager','onsdager','torsdager','fredager','lørdager'];
+  const WEEKDAYS = [1,2,3,4,5];
+  const NO_BUY_DAYS = [5]; // never buy on Fridays: the loaf would sit over the weekend
+  const BUY_DAYS = WEEKDAYS.filter(d => !NO_BUY_DAYS.includes(d));
+  const LS_KEY = 'breadclub.me';
+  const OUTLY_CRYING = 'assets/outly-crying.png';
+  const OUTLY_SEARCHING = 'assets/outly-searching.png';
+
+  const state = { db:null, canWrite:null, settings:null, loaves:[], slices:[], ready:false, unavailable:false, settingsJson:'', settingsDirty:false, editing:false, me:null, flash:'' };
+  try { state.me = localStorage.getItem(LS_KEY) || null; } catch (_) {}
+
+  const pad = n => String(n).padStart(2,'0');
+  const localDate = (d=new Date()) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const parseDate = s => { const [y,m,d] = String(s).split('-').map(Number); return new Date(y, (m||1)-1, d||1); };
+  const addDays = (d,n) => new Date(d.getFullYear(), d.getMonth(), d.getDate()+n);
+  const startOfDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const fmtDate = s => { const d = parseDate(s); return isNaN(d) ? s : `${DAY_SHORT[d.getDay()]} ${pad(d.getDate())}.${pad(d.getMonth()+1)}.${String(d.getFullYear()).slice(2)}`; };
+  const fmt1 = n => (Math.round(n*10)/10).toFixed(1).replace('.', ',');
+  const lunchDone = () => new Date().getHours() >= 13;
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+  function members(){ return (state.settings && Array.isArray(state.settings.members)) ? state.settings.members : []; }
+  function member(id){ return members().find(m => m.id === id) || null; }
+  function slicesPerLoaf(){ const n = Number(state.settings && state.settings.slicesPerLoaf); return n > 0 ? n : 18; }
+  function dailySlices(jsDay){ return members().reduce((a,m) => a + ((m.days||[]).includes(jsDay) ? Number(m.slicesPerDay)||0 : 0), 0); }
+  function weeklySlices(){ return WEEKDAYS.reduce((a,d) => a + dailySlices(d), 0); }
+  function nameOf(id){ const m = member(id); return m ? (m.name || 'Uten navn') : 'Tidligere medlem'; }
+  function prefLabel(m){ const p = Number(m.preferredDay); return BUY_DAYS.includes(p) ? DAY_LONG[p] : 'hvilken som helst kontordag'; }
+  function inOffice(m, jsDay){ return (m.days||[]).includes(jsDay); }
+  function startDate(){ const v = state.settings && state.settings.startDate; return /^\d{4}-\d{2}-\d{2}$/.test(v||'') ? v : ''; }
+  function beforeStart(){ const sd = startDate(); return sd && localDate() < sd; }
+  function loaves(){ const sd = startDate(); return sd ? state.loaves.filter(l => l.date >= sd) : state.loaves; }
+  function sliceMap(){ const m = {}; state.slices.forEach(r => { if (r.member && r.date) m[r.date + '|' + r.member] = Number(r.slices) || 0; }); return m; }
+  function loggedOn(map, mId, ds){ const v = map[ds + '|' + mId]; return v === undefined ? null : v; }
+  // Slices a person ate on a date: what they logged, or (if assume) their usual on an office day.
+  function eatenOn(map, m, ds, jsDay, assume){ const v = loggedOn(map, m.id, ds); if (v !== null) return v; return assume && inOffice(m, jsDay) ? (Number(m.slicesPerDay)||0) : 0; }
+  // Which past days count as eaten: up to yesterday, or today once lunch is done. Today before lunch counts only what is logged.
+  function eatenDays(fromDs){
+    const now = new Date(); const today = localDate(now);
+    const out = []; let d = parseDate(fromDs); if (isNaN(d)) return out;
+    let guard = 0;
+    while (localDate(d) <= today && guard++ < 400) { const ds = localDate(d); out.push({ ds, jsDay: d.getDay(), assume: ds < today || lunchDone() }); d = addDays(d, 1); }
+    return out;
+  }
+  function anyLogged(){ const sd = startDate(); return state.slices.some(r => !sd || r.date >= sd); }
+
+  function stats(){
+    const ms = members();
+    const weekly = ms.map(m => (Number(m.slicesPerDay)||0) * (m.days||[]).length);
+    const totalWeekly = weekly.reduce((a,b)=>a+b,0);
+    const counts = {}, last = {};
+    ms.forEach(m => { counts[m.id] = 0; });
+    let n = 0;
+    loaves().forEach(l => { if (l.buyer in counts) { counts[l.buyer]++; n++; if (!last[l.buyer] || l.date > last[l.buyer]) last[l.buyer] = l.date; } });
+    // Actual consumption since the start date (or the first logged slice), logged where available, usual otherwise.
+    const map = sliceMap();
+    const sd = startDate() || (state.slices.length ? state.slices.map(r => r.date).sort()[0] : '');
+    const useActual = anyLogged() && sd;
+    const days = useActual ? eatenDays(sd) : [];
+    const eaten = ms.map(m => days.reduce((a, d) => a + eatenOn(map, m, d.ds, d.jsDay, d.assume), 0));
+    const totalEaten = eaten.reduce((a,b)=>a+b,0);
+    return ms.map((m,i) => {
+      const share = useActual && totalEaten > 0 ? eaten[i]/totalEaten : (totalWeekly ? weekly[i]/totalWeekly : 0);
+      return { m, weekly: weekly[i], eaten: eaten[i], actual: !!(useActual && totalEaten > 0), share, bought: counts[m.id], fair: share*n, balance: counts[m.id] - share*n, last: last[m.id] || '' };
+    });
+  }
+
+  function cmpKey(a,b){ for (let i=0;i<a.length;i++){ if (a[i] < b[i]) return -1; if (a[i] > b[i]) return 1; } return 0; }
+  function upcoming(st, k){
+    const eligible = st.filter(s => s.share > 0);
+    if (!eligible.length) return [];
+    const counts = Object.fromEntries(eligible.map(s => [s.m.id, s.bought]));
+    let n = eligible.reduce((a,s) => a + s.bought, 0);
+    const out = [];
+    for (let i = 0; i < k; i++) {
+      let best = null, bestKey = null;
+      eligible.forEach((s, idx) => {
+        const key = [counts[s.m.id] - s.share*n, counts[s.m.id], s.last, idx];
+        if (!best || cmpKey(key, bestKey) < 0) { best = s; bestKey = key; }
+      });
+      out.push(best); counts[best.m.id]++; n++;
+    }
+    return out;
+  }
+
+  function stockEstimate(){
+    const ls = loaves();
+    if (!ls.length) return null;
+    const latest = ls[0];
+    const slices = Number(latest.slices) > 0 ? Number(latest.slices) : slicesPerLoaf();
+    const now = new Date();
+    if (isNaN(parseDate(latest.date))) return null;
+    const map = sliceMap();
+    const ms = members();
+    let consumed = 0;
+    eatenDays(latest.date).forEach(d => { ms.forEach(m => { consumed += eatenOn(map, m, d.ds, d.jsDay, d.assume); }); });
+    const remaining = slices - consumed;
+    let runOut = null;
+    if (remaining > 0) {
+      let r = remaining;
+      let dd = lunchDone() ? addDays(now,1) : startOfDay(now);
+      if (localDate(dd) < latest.date) dd = parseDate(latest.date);
+      for (let i = 0; i < 21; i++) { r -= dailySlices(dd.getDay()); if (r <= 0) { runOut = dd; break; } dd = addDays(dd,1); }
+    }
+    return { latest, slices, consumed, remaining, runOut, daysAgo: Math.round((startOfDay(now) - parseDate(latest.date)) / 86400000) };
+  }
+
+  function plan(){
+    const st = stats();
+    const q = upcoming(st, 24);
+    if (!q.length) return { days: [], first: null };
+    const now = new Date();
+    const est = stockEstimate();
+    let stock = est ? Math.max(0, est.remaining) : 0;
+    const monday = addDays(startOfDay(now), -((now.getDay()+6)%7));
+    const today = localDate(now);
+    const days = [];
+    let qi = 0;
+    const loaf = slicesPerLoaf();
+    for (let i = 0; i < 28; i++) {
+      const d = addDays(monday, i);
+      const jd = d.getDay();
+      if (jd === 0 || jd === 6) continue;
+      const ds = localDate(d);
+      const sd = startDate();
+      const cell = { date: ds, jsDay: jd, past: ds < today || (ds === today && lunchDone()), today: ds === today, buyer: null, why: '', pre: !!sd && ds < sd };
+      if (!cell.past && !cell.pre) {
+        const need = dailySlices(jd);
+        // Slices needed today plus on the no-buy days that follow directly (Friday), so Thursday covers Friday.
+        let ahead = need;
+        for (let n = 1; n < 4; n++) { const nd = addDays(d, n).getDay(); if (nd === 0 || nd === 6) break; if (!NO_BUY_DAYS.includes(nd)) break; ahead += dailySlices(nd); }
+        if (!NO_BUY_DAYS.includes(jd)) {
+          let head = q[qi];
+          const headHere = head && inOffice(head.m, jd);
+          const preferred = headHere && Number(head.m.preferredDay) === jd;
+          let buyer = null, why = '';
+          if (stock < ahead && ahead > 0) {
+            let k = qi; while (k < q.length && !inOffice(q[k].m, jd)) k++;
+            if (k < q.length) { buyer = q[k]; why = k === qi ? (stock < need ? 'brødet tar slutt' : 'holder til fredag') : 'dekker for ' + head.m.name; q.splice(k,1); q.splice(qi,0,buyer); }
+          } else if (preferred && need > 0 && stock < ahead * 2 + 1) {
+            buyer = head; why = 'foretrukket dag';
+          }
+          if (buyer) { cell.buyer = buyer.m; cell.why = why; stock += loaf; qi++; }
+        } else {
+          cell.noBuy = true;
+        }
+        stock = Math.max(0, stock - need);
+      }
+      days.push(cell);
+    }
+    return { days, first: days.find(c => c.buyer) || null };
+  }
+
+  // ---------- render ----------
+  function render(){
+    renderIam(); renderAlert(); renderHero(); renderEat(); renderPlan(); renderBalances(); renderQueue(); renderStock(); renderLog(); renderRules(); renderSettings(); renderForm();
+  }
+
+  function renderIam(){
+    const box = $('#iam');
+    const ms = members();
+    if (!state.ready || !ms.length) { box.hidden = true; return; }
+    box.hidden = false;
+    if (state.me && !member(state.me)) state.me = null;
+    $('#iam-chips').innerHTML = ms.map(m => `<button type="button" class="small pill${state.me === m.id ? ' sel' : ''}" data-me="${esc(m.id)}">${esc(m.name || 'Uten navn')}</button>`).join('') + `<button type="button" class="small pill${state.me ? '' : ' sel'}" data-me="">bare titter</button>`;
+  }
+
+  function renderAlert(){
+    const el = $('#alert');
+    if (!state.ready || !members().length || beforeStart()) { el.hidden = true; return; }
+    const est = stockEstimate();
+    const p = plan();
+    if (est && est.remaining <= 0 && !(p.first && p.first.today)) {
+      el.hidden = false;
+      el.innerHTML = `<img src="${OUTLY_CRYING}" alt=""><div class="t"><b>Det siste brødet er nok oppspist.</b><span>Registrert ${esc(fmtDate(est.latest.date))} av ${esc(nameOf(est.latest.buyer))}, omtrent ${est.consumed} skiver siden. Enten er det kjøpt et nytt brød som ikke er registrert, eller så har ingen kjøpt ennå.</span><div class="actions"><button type="button" class="black small" data-act="log">Noen har kjøpt, registrer det</button></div></div>`;
+      return;
+    }
+    if (est && est.remaining <= 0 && p.first && p.first.today) {
+      el.hidden = false;
+      el.innerHTML = `<img src="${OUTLY_CRYING}" alt=""><div class="t"><b>Ingen brød til lunsj med mindre noen kjøper i dag.</b><span>Planen sier ${esc(p.first.buyer.name)}. Er det allerede kjøpt, registrer det, så forsvinner denne.</span></div>`;
+      return;
+    }
+    el.hidden = true;
+  }
+
+  function renderHero(){
+    const who = $('#who'), meta = $('#who-meta'), note = $('#hero-note'), eyebrow = $('#hero-eyebrow');
+    const bQuick = $('#btn-quick'), bLog = $('#btn-log'), bRem = $('#btn-remind'), buyNote = $('#buy-note');
+    const hideAll = () => { bQuick.hidden = bLog.hidden = bRem.hidden = true; buyNote.hidden = true; };
+    if (state.unavailable) { who.textContent = 'Logg inn for å se klubben'; meta.innerHTML = ''; note.textContent = 'Den felles loggen er bare synlig for innloggede medlemmer.'; hideAll(); return; }
+    if (!state.ready) return;
+    const ms = members();
+    if (!ms.length) { who.textContent = 'Ingen medlemmer ennå'; meta.innerHTML = ''; note.textContent = 'Åpne «Medlemmer og innstillinger» nederst og legg til alle.'; hideAll(); $('#settings').open = true; return; }
+    const st = stats();
+    const q = upcoming(st, 1);
+    if (!q.length) { who.textContent = 'Spiser ingen brød?'; meta.innerHTML = ''; note.textContent = 'Gi hvert medlem noen skiver per dag og noen kontordager.'; hideAll(); return; }
+    const next = q[0];
+    const p = plan();
+    const first = p.first;
+    const me = member(state.me);
+    const jd = new Date().getDay();
+    if (beforeStart()) {
+      const sd = startDate();
+      const daysLeft = Math.round((parseDate(sd) - startOfDay(new Date())) / 86400000);
+      eyebrow.textContent = 'Vi starter snart';
+      who.textContent = `Første brød ${DAY_LONG[parseDate(sd).getDay()]} ${fmtDate(sd).slice(4)}.`;
+      meta.innerHTML = `<span>Første tur: <b>${esc(first ? first.buyer.name : next.m.name)}</b></span><span>Om <b class="num">${daysLeft}</b> ${daysLeft === 1 ? 'dag' : 'dager'}</span><span>Regnskapet starter på null</span>`;
+      note.textContent = me ? (first && first.buyer.id === me.id ? `Det er du som kjøper det første brødet, ${me.name}.` : '') : 'Velg navnet ditt over, så vet du om du starter.';
+      const what0 = (state.settings && state.settings.whatToBuy || '').trim();
+      if (what0) { buyNote.hidden = false; buyNote.innerHTML = `<span class="overline">Hva som skal kjøpes</span><span>${esc(what0)}</span>`; } else buyNote.hidden = true;
+      bQuick.hidden = true; bLog.hidden = state.canWrite === false; bRem.hidden = !first;
+      if (state.flash) { note.textContent = state.flash; note.className = 'ok'; } else note.className = 'notice';
+      return;
+    }
+
+    if (me) {
+      const mine = first && first.buyer.id === me.id;
+      if (mine && first.today) { eyebrow.textContent = 'I dag'; who.textContent = `Din tur, ${me.name}!`; }
+      else if (mine) { eyebrow.textContent = 'Din neste tur'; who.textContent = `${cap(DAY_LONG[first.jsDay])}, ${me.name}.`; }
+      else if (first) { eyebrow.textContent = 'Ikke deg'; who.textContent = `${first.buyer.name} kjøper ${first.today ? 'i dag' : DAY_LONG[first.jsDay]}.`; }
+      else { eyebrow.textContent = 'Neste brød'; who.textContent = next.m.name; }
+      if (!inOffice(me, jd) && jd >= 1 && jd <= 5) note.textContent = `Du er ikke på kontoret på ${DAY_PL[jd]}, så ingen forventer noe av deg i dag.`;
+      else note.textContent = '';
+    } else {
+      eyebrow.textContent = first ? (first.today ? 'I dag' : 'Neste brød') : 'Neste brød';
+      who.textContent = first ? `${first.buyer.name} kjøper ${first.today ? 'i dag' : DAY_LONG[first.jsDay]}.` : next.m.name;
+      note.textContent = 'Velg navnet ditt over for å se om det er din tur.';
+    }
+    const b = next.balance;
+    const balTxt = Math.abs(b) < 0.05 ? 'à jour' : (b < 0 ? `${fmt1(-b)} brød bak` : `${fmt1(b)} brød foran`);
+    meta.innerHTML = `<span>Neste i køen: <b>${esc(next.m.name)}</b></span><span>Foretrekker <b>${esc(prefLabel(next.m))}</b></span><span>Ligger <b>${esc(balTxt)}</b></span>`;
+
+    const what = (state.settings && state.settings.whatToBuy || '').trim();
+    const buyerNotes = first ? (first.buyer.notes || '').trim() : '';
+    if (what || buyerNotes) {
+      buyNote.hidden = false;
+      buyNote.innerHTML = `<span class="overline">Hva som skal kjøpes</span>${what ? `<span>${esc(what)}</span>` : ''}${buyerNotes ? `<span class="notice">${esc(first.buyer.name)}: ${esc(buyerNotes)}</span>` : ''}`;
+    } else buyNote.hidden = true;
+
+    const canWrite = state.canWrite !== false;
+    bQuick.hidden = !canWrite || state.editing || !me;
+    bLog.hidden = !canWrite || state.editing;
+    bRem.hidden = !first;
+    if (!canWrite) note.textContent = 'Du kan se loggen, men ikke legge til. Be eieren om bidragsyter-tilgang.';
+    if (state.flash) { note.textContent = state.flash; note.className = 'ok'; } else note.className = 'notice';
+  }
+
+  function renderEat(){
+    const card = $('#eat');
+    if (!state.ready || !members().length) { card.hidden = true; return; }
+    card.hidden = false;
+    const me = member(state.me);
+    const map = sliceMap();
+    const today = localDate();
+    const canWrite = state.canWrite !== false;
+    $('#eat-me').hidden = !me || !canWrite;
+    $('#eat-hint').hidden = !!me || !canWrite;
+    if (me) {
+      const logged = loggedOn(map, me.id, today);
+      if (!state.eatEditing) { state.eatVal = logged !== null ? logged : (inOffice(me, new Date().getDay()) ? Number(me.slicesPerDay)||0 : 0); }
+      $('#eat-val').textContent = state.eatVal;
+      $('#eat-label').textContent = logged !== null ? `Du har registrert ${logged} i dag. Endre:` : 'Hvor mange skiver spiste du i dag?';
+    }
+    // Today, everyone
+    $('#eat-today').innerHTML = members().map(m => { const v = loggedOn(map, m.id, today); return `<span>${esc(m.name)}: <b>${v === null ? (inOffice(m, new Date().getDay()) ? 'ikke registrert' : 'ikke på kontoret') : v + ' skiver'}</b></span>`; }).join('');
+    // This week table
+    const now = new Date();
+    const monday = addDays(startOfDay(now), -((now.getDay()+6)%7));
+    const days = WEEKDAYS.map(d => addDays(monday, d-1));
+    const sd = startDate();
+    const head = `<tr><th></th>${days.map(d => `<th>${DAY_SHORT[d.getDay()]} ${pad(d.getDate())}.${pad(d.getMonth()+1)}.</th>`).join('')}<th>Uke</th></tr>`;
+    const rows = members().map(m => {
+      let sum = 0;
+      const cells = days.map(d => {
+        const ds = localDate(d);
+        const v = loggedOn(map, m.id, ds);
+        const future = ds > today || (ds === today && !lunchDone() && v === null);
+        const pre = sd && ds < sd;
+        let txt, cls = ds === today ? 'tod' : '';
+        if (v !== null) { txt = v; sum += v; }
+        else if (pre || future) { txt = '·'; cls += ' est'; }
+        else if (inOffice(m, d.getDay())) { txt = Number(m.slicesPerDay)||0; sum += Number(m.slicesPerDay)||0; cls += ' est'; }
+        else { txt = '–'; cls += ' est'; }
+        return `<td class="${cls.trim()}">${txt}</td>`;
+      }).join('');
+      return `<tr><td>${esc(m.name)}</td>${cells}<td class="num">${sum}</td></tr>`;
+    }).join('');
+    $('#sl-table').innerHTML = head + rows;
+    // Late form options
+    const sel = $('#l-who'); const cur = sel.value;
+    sel.innerHTML = members().map(m => `<option value="${esc(m.id)}">${esc(m.name)}</option>`).join('');
+    if (members().some(m => m.id === cur)) sel.value = cur; else if (me) sel.value = me.id;
+    if (!$('#l-date').value) $('#l-date').value = localDate(addDays(now, -1));
+    $('#l-date').min = sd && sd <= today ? sd : ''; $('#l-date').max = today;
+    $('#eat-pre').hidden = !beforeStart();
+    $('#late-box').hidden = !canWrite;
+  }
+
+  function renderPlan(){
+    const el = $('#week'), noteEl = $('#week-note');
+    if (!state.ready) return;
+    const p = plan();
+    if (!p.days.length) { el.innerHTML = ''; noteEl.textContent = 'Legg til medlemmer for å få en plan.'; return; }
+    const weeks = [0,1,2,3].map(i => p.days.slice(i*5, i*5+5));
+    const wkLabel = (w,i) => (i === 0 ? 'Denne uka' : i === 1 ? 'Neste uke' : `Om ${i} uker`) + ` · ${fmtDate(w[0].date).slice(4)}–${fmtDate(w[4].date).slice(4)}`;
+    el.innerHTML = weeks.map((w,i) => `<div class="lbl">${wkLabel(w,i)}</div><div class="wk">${w.map(c => {
+      const cls = ['cell', c.buyer ? 'buy' : '', c.today ? 'today' : '', (c.past || c.pre) && !c.buyer ? 'past' : ''].filter(Boolean).join(' ');
+      const who = c.buyer ? esc(c.buyer.name) : (c.past || c.pre ? '' : '—');
+      const s = c.buyer ? c.why : (c.pre ? 'før start' : (c.noBuy ? `${dailySlices(c.jsDay)} skiver · aldri kjøp` : (dailySlices(c.jsDay) ? `${dailySlices(c.jsDay)} skiver` : 'ingen på jobb')));
+      return `<div class="${cls}"><span class="d">${DAY_SHORT[c.jsDay]}${c.today ? ' · i dag' : ''}</span><span class="n">${who}</span><span class="s">${esc(s)}</span></div>`;
+    }).join('')}</div>`).join('');
+    noteEl.textContent = 'Beregnet ut fra siste brød og hvor mye klubben spiser. Planen flytter seg etter hvert som brød registreres; navnene følger rekkefølgen i regnskapet.';
+  }
+
+  function renderBalances(){
+    const el = $('#balances');
+    if (!state.ready) return;
+    const st = stats();
+    if (!st.length) { el.innerHTML = '<p class="empty">Legg til medlemmer under innstillinger.</p>'; return; }
+    const maxBought = Math.max(1, ...st.map(s => Math.max(s.bought, s.fair)));
+    el.innerHTML = st.map(s => {
+      const b = s.balance;
+      const chip = Math.abs(b) < 0.05 ? '<span class="chip">à jour</span>' : (b < 0 ? `<span class="chip behind">${fmt1(-b)} bak</span>` : `<span class="chip ahead">${fmt1(b)} foran</span>`);
+      const fillW = (s.bought / maxBought * 100).toFixed(1);
+      const tickL = (s.fair / maxBought * 100).toFixed(1);
+      const days = (s.m.days||[]).slice().sort().map(d => DAY_SHORT[d]).join(' ');
+      return `<div class="item">
+        <div class="head"><span class="name">${esc(s.m.name || 'Uten navn')}${state.me === s.m.id ? ' <span class="chip you">Deg</span>' : ''}</span>${chip}</div>
+        <div class="bar"><div class="fill" style="width:${fillW}%"></div><div class="tick" style="left:calc(${tickL}% - 1px)"></div></div>
+        <div class="figs"><span class="num">${s.bought} kjøpt</span><span class="num">rettferdig andel ${fmt1(s.fair)}</span><span class="num">${s.actual ? `${s.eaten} skiver spist` : `${s.weekly} skiver/uke`} (${Math.round(s.share*100)} %)</span><span>${esc(days) || 'ingen kontordager'}</span>${s.last ? `<span>sist: ${esc(fmtDate(s.last))}</span>` : ''}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderQueue(){
+    const el = $('#queue');
+    if (!state.ready) return;
+    const q = upcoming(stats(), 6);
+    el.innerHTML = q.length ? q.map((s,i) => `<li><span>${i === 0 ? 'Neste: ' : ''}${esc(s.m.name || 'Uten navn')}</span><small>${esc(prefLabel(s.m))}</small></li>`).join('') : '<li class="empty">Ingenting å planlegge ennå.</li>';
+  }
+
+  function renderStock(){
+    const el = $('#stock');
+    if (!state.ready) return;
+    const e = stockEstimate();
+    if (!e) { el.innerHTML = beforeStart() ? `<p class="empty">Klubben starter ${esc(fmtDate(startDate()))}. Det første brødet som registreres, starter klokka.</p>` : '<p class="empty">Ingen brød registrert ennå. Det første som registreres, starter klokka.</p>'; return; }
+    const sizeNote = e.slices !== slicesPerLoaf() ? ` (${e.slices} skiver)` : '';
+    const ago = e.daysAgo === 0 ? 'i dag' : e.daysAgo === 1 ? 'i går' : `for ${e.daysAgo} dager siden`;
+    let tone, dot, lbl, body;
+    if (e.consumed <= 0) { tone = 'in'; dot = 'var(--stock-in)'; lbl = 'Ferskt brød'; body = `Urørt så langt; det bør holde til rundt ${e.runOut ? DAY_LONG[e.runOut.getDay()] : 'neste uke'}.`; }
+    else if (e.remaining <= 0) { tone = 'out'; dot = 'var(--error)'; lbl = 'Trolig oppspist'; body = `Omtrent ${e.consumed} skiver spist siden da.`; }
+    else if (e.runOut && (e.runOut - startOfDay(new Date())) <= 86400000) { tone = 'soon'; dot = 'var(--warning)'; lbl = `Tar slutt ${e.runOut.getDay() === new Date().getDay() ? 'i dag' : 'i morgen'}`; body = `Omtrent ${e.remaining} av ${e.slices} skiver igjen.`; }
+    else { tone = 'in'; dot = 'var(--stock-in)'; lbl = 'Fortsatt brød'; body = `Omtrent ${e.remaining} av ${e.slices} skiver igjen; tar slutt rundt ${e.runOut ? DAY_LONG[e.runOut.getDay()] + ' lunsj' : 'neste uke'}.`; }
+    el.innerHTML = `<span class="dot" style="background:${dot}"></span><div><span class="lbl ${tone}">${esc(lbl)}</span><br>Kjøpt ${esc(fmtDate(e.latest.date))} (${ago}) av ${esc(nameOf(e.latest.buyer))}${sizeNote}. ${esc(body)}<br><span class="notice">Anslag ut fra klubbens vanlige forbruk, ikke en telling.</span></div>`;
+  }
+
+  function renderLog(){
+    const el = $('#log');
+    if (!state.ready) return;
+    const sd = startDate();
+    if (!state.loaves.length) { el.innerHTML = `<li class="emptyl"><img src="${OUTLY_SEARCHING}" alt=""><span class="empty">Her var det tomt! Hvert brød dere registrerer, dukker opp her for alle tre.</span></li>`; return; }
+    const canDel = state.canWrite !== false;
+    el.innerHTML = state.loaves.slice(0, 60).map(l => `<li data-id="${esc(l.id)}">
+      <div class="l"><span>${esc(nameOf(l.buyer))}${sd && l.date < sd ? ' <span class="chip">før start, teller ikke</span>' : ''}</span><small>${esc(fmtDate(l.date))}${l.slices && Number(l.slices) !== slicesPerLoaf() ? ` · ${esc(l.slices)} skiver` : ''}${l.note ? ' · ' + esc(l.note) : ''}</small></div>
+      ${canDel ? '<button type="button" class="small del">Fjern</button>' : ''}
+    </li>`).join('');
+  }
+
+  function renderRules(){
+    const el = $('#rules');
+    if (!state.ready) return;
+    const what = (state.settings && state.settings.whatToBuy || '').trim();
+    const notes = members().filter(m => (m.notes||'').trim());
+    if (!what && !notes.length) { el.innerHTML = 'Ingenting skrevet ned ennå. Legg det inn under innstillinger, så slipper den som handler å gjette.'; return; }
+    el.innerHTML = `${what ? `<p>${esc(what)}</p>` : ''}${notes.length ? `<ul class="rules">${notes.map(m => `<li><b>${esc(m.name)}</b>: ${esc(m.notes.trim())}</li>`).join('')}</ul>` : ''}`;
+  }
+
+  function renderForm(){
+    const sel = $('#f-buyer');
+    const current = sel.value;
+    const ms = members();
+    sel.innerHTML = ms.map(m => `<option value="${esc(m.id)}">${esc(m.name || 'Uten navn')}</option>`).join('');
+    if (ms.some(m => m.id === current)) sel.value = current;
+  }
+
+  function renderSettings(){
+    if (!state.ready) return;
+    const json = JSON.stringify(state.settings || null);
+    $('#settings-note').textContent = members().length ? `Klubben spiser ${weeklySlices()} skiver i uka, omtrent ${fmt1(weeklySlices()/slicesPerLoaf())} brød à ${slicesPerLoaf()} skiver. Turene fordeles etter hvor mye hver enkelt spiser.` : 'Legg til hvert medlem, skiver per dag og hvilke ukedager de er på kontoret.';
+    if (json === state.settingsJson || state.settingsDirty) return;
+    state.settingsJson = json;
+    $('#s-spl').value = slicesPerLoaf();
+    $('#s-start').value = startDate();
+    $('#s-buy').value = (state.settings && state.settings.whatToBuy) || '';
+    $('#members').innerHTML = members().map(memberRow).join('');
+  }
+
+  function memberRow(m){
+    const days = m.days || [];
+    return `<div class="member" data-id="${esc(m.id)}">
+      <div class="grid2">
+        <label>Navn <input type="text" class="m-name" value="${esc(m.name)}" maxlength="40"></label>
+        <label>Skiver per kontordag <input type="number" class="m-slices" min="0" max="30" step="1" value="${esc(m.slicesPerDay ?? 0)}"></label>
+      </div>
+      <div class="days">${WEEKDAYS.map(d => `<label><input type="checkbox" class="m-day" value="${d}" ${days.includes(d) ? 'checked' : ''}>${cap(DAY_SHORT[d])}</label>`).join('')}</div>
+      <div class="grid2">
+        <label>Foretrekker å kjøpe på <select class="m-pref"><option value="0" ${!m.preferredDay ? 'selected' : ''}>Hvilken som helst kontordag</option>${BUY_DAYS.map(d => `<option value="${d}" ${Number(m.preferredDay) === d ? 'selected' : ''}>${cap(DAY_LONG[d])}</option>`).join('')}</select></label>
+        <label>Særkrav (ting den som handler må respektere) <input type="text" class="m-notes" value="${esc(m.notes || '')}" maxlength="120" placeholder="f.eks. ikke frø, må ha skalken"></label>
+      </div>
+      <div><button type="button" class="small danger m-remove">Fjern medlem</button></div>
+    </div>`;
+  }
+
+  function readSettingsForm(){
+    const rows = [...document.querySelectorAll('#members .member')];
+    const ms = rows.map(r => ({
+      id: r.dataset.id,
+      name: r.querySelector('.m-name').value.trim(),
+      slicesPerDay: Math.max(0, Math.round(Number(r.querySelector('.m-slices').value) || 0)),
+      days: [...r.querySelectorAll('.m-day:checked')].map(c => Number(c.value)),
+      preferredDay: Number(r.querySelector('.m-pref').value) || 0,
+      notes: r.querySelector('.m-notes').value.trim(),
+    }));
+    const spl = Math.max(1, Math.round(Number($('#s-spl').value) || 18));
+    const sdv = $('#s-start').value;
+    return { slicesPerLoaf: spl, members: ms, whatToBuy: $('#s-buy').value.trim(), startDate: /^\d{4}-\d{2}-\d{2}$/.test(sdv) ? sdv : '' };
+  }
+
+  function reminderText(){
+    const p = plan();
+    const f = p.first; if (!f) return '';
+    const what = (state.settings && state.settings.whatToBuy || '').trim();
+    return `🍞 B-gjengen: ${f.buyer.name} kjøper ${beforeStart() ? 'det første brødet' : 'neste brød'} ${f.today ? 'i dag' : DAY_LONG[f.jsDay]}${f.today ? '' : ' (' + fmtDate(f.date) + ')'}.${what ? ' ' + what + '.' : ''} Registrer det i appen når det er gjort.`;
+  }
+
+  async function saveLoaf(buyer, date, slices, note){
+    await state.db.collection('loaves').add({ buyer, date, slices, note, createdAt: new Date().toISOString() });
+  }
+  function flash(msg){ state.flash = msg; renderHero(); setTimeout(() => { state.flash = ''; renderHero(); }, 4000); }
+  function openForm(buyerId, date){
+    state.editing = true;
+    $('#log-form').hidden = false;
+    $('#f-date').value = date || (beforeStart() ? startDate() : localDate());
+    $('#f-date').min = startDate() || '';
+    $('#f-slices').value = slicesPerLoaf();
+    $('#f-note').value = '';
+    $('#f-err').textContent = '';
+    const b = buyerId || state.me || (upcoming(stats(), 1)[0] || {m:{}}).m.id;
+    if (b) $('#f-buyer').value = b;
+    renderHero();
+    $('#f-buyer').focus();
+  }
+  const NO_ACCESS = 'Du har ikke skrivetilgang til loggen.';
+  const SAVE_FAIL = 'Kunne ikke lagre. Prøv igjen om et øyeblikk.';
+  async function saveSlices(mId, date, n){
+    await state.db.doc('slices/' + date + '_' + mId).set({ member: mId, date, slices: n, updatedAt: new Date().toISOString() });
+  }
+  $('#eat-minus').addEventListener('click', () => { state.eatEditing = true; state.eatVal = Math.max(0, (state.eatVal||0) - 1); $('#eat-val').textContent = state.eatVal; });
+  $('#eat-plus').addEventListener('click', () => { state.eatEditing = true; state.eatVal = Math.min(30, (state.eatVal||0) + 1); $('#eat-val').textContent = state.eatVal; });
+  $('#eat-save').addEventListener('click', async () => {
+    if (!state.db || !state.me) return;
+    const btn = $('#eat-save'); btn.disabled = true; const note = $('#eat-note'); note.className = 'notice'; note.textContent = '';
+    try { await saveSlices(state.me, localDate(), state.eatVal||0); state.eatEditing = false; note.className = 'ok'; note.textContent = 'Registrert!'; setTimeout(() => { note.textContent = ''; }, 3000); }
+    catch (ex) { note.className = 'err'; note.textContent = ex && ex.code === 'invalid_argument' ? NO_ACCESS : SAVE_FAIL; }
+    finally { btn.disabled = false; }
+  });
+  $('#late-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!state.db) return;
+    const who = $('#l-who').value, date = $('#l-date').value, n = Math.round(Number($('#l-slices').value));
+    const err = $('#l-err'); err.className = 'err'; err.textContent = '';
+    if (!who) { err.textContent = 'Velg hvem.'; return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date > localDate()) { err.textContent = 'Velg en dato som har vært.'; return; }
+    if (!(n >= 0)) { err.textContent = 'Skriv antall skiver.'; return; }
+    try { await saveSlices(who, date, n); err.className = 'ok'; err.textContent = `Lagret: ${nameOf(who)}, ${n} skiver ${fmtDate(date)}.`; $('#l-slices').value = ''; }
+    catch (ex) { err.textContent = ex && ex.code === 'invalid_argument' ? NO_ACCESS : SAVE_FAIL; }
+  });
+
+  // ---------- events ----------
+  $('#iam-chips').addEventListener('click', e => {
+    const b = e.target.closest('button[data-me]'); if (!b) return;
+    state.me = b.dataset.me || null;
+    try { if (state.me) localStorage.setItem(LS_KEY, state.me); else localStorage.removeItem(LS_KEY); } catch (_) {}
+    render();
+  });
+  $('#alert').addEventListener('click', e => { if (e.target.closest('[data-act="log"]')) openForm(); });
+  $('#btn-log').addEventListener('click', () => openForm());
+  $('#f-yesterday').addEventListener('click', () => { $('#f-date').value = localDate(addDays(new Date(), -1)); });
+  $('#f-cancel').addEventListener('click', () => { state.editing = false; $('#log-form').hidden = true; renderHero(); });
+  $('#btn-quick').addEventListener('click', async () => {
+    if (!state.db || !state.me) return;
+    const btn = $('#btn-quick'); btn.disabled = true;
+    try { await saveLoaf(state.me, localDate(), slicesPerLoaf(), ''); flash('Registrert. Takk, ' + nameOf(state.me) + '!'); }
+    catch (ex) { flash(''); $('#hero-note').textContent = ex && ex.code === 'invalid_argument' ? NO_ACCESS : SAVE_FAIL; if (ex && ex.code === 'invalid_argument') { state.canWrite = false; render(); } }
+    finally { btn.disabled = false; }
+  });
+  $('#btn-remind').addEventListener('click', () => {
+    const t = reminderText(); if (!t) return;
+    const done = () => flash('Påminnelse kopiert. Lim den inn i chatten.');
+    try { navigator.clipboard.writeText(t).then(done).catch(() => { $('#hero-note').textContent = t; }); }
+    catch (_) { $('#hero-note').textContent = t; }
+  });
+
+  $('#log-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!state.db) return;
+    const buyer = $('#f-buyer').value, date = $('#f-date').value;
+    const slices = Math.round(Number($('#f-slices').value)) || slicesPerLoaf();
+    const note = $('#f-note').value.trim();
+    const err = $('#f-err');
+    if (!buyer) { err.textContent = 'Velg hvem som kjøpte.'; return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { err.textContent = 'Velg en dato.'; return; }
+    if (startDate() && date < startDate()) { err.textContent = `Klubben starter ${fmtDate(startDate())}. Brød før det teller ikke.`; return; }
+    const btn = $('#f-save'); btn.disabled = true; err.textContent = '';
+    try {
+      await saveLoaf(buyer, date, slices, note);
+      state.editing = false; $('#log-form').hidden = true; flash('Registrert.');
+    } catch (ex) {
+      err.textContent = ex && ex.code === 'invalid_argument' ? NO_ACCESS : SAVE_FAIL;
+      if (ex && ex.code === 'invalid_argument') { state.canWrite = false; render(); }
+    } finally { btn.disabled = false; }
+  });
+
+  $('#log').addEventListener('click', async e => {
+    const btn = e.target.closest('button.del'); if (!btn || !state.db) return;
+    const li = btn.closest('li'); const id = li && li.dataset.id; if (!id) return;
+    if (btn.dataset.armed !== '1') { btn.dataset.armed = '1'; btn.textContent = 'Bekreft fjerning'; btn.classList.add('danger'); setTimeout(() => { btn.dataset.armed = ''; btn.textContent = 'Fjern'; btn.classList.remove('danger'); }, 4000); return; }
+    btn.disabled = true;
+    try { await state.db.collection('loaves').doc(id).delete(); }
+    catch (ex) { btn.disabled = false; btn.textContent = 'Kunne ikke fjerne'; }
+  });
+
+  $('#members').addEventListener('input', () => { state.settingsDirty = true; });
+  $('#s-spl').addEventListener('input', () => { state.settingsDirty = true; });
+  $('#s-buy').addEventListener('input', () => { state.settingsDirty = true; });
+  $('#s-start').addEventListener('input', () => { state.settingsDirty = true; });
+  $('#members').addEventListener('click', e => {
+    const b = e.target.closest('.m-remove'); if (!b) return;
+    b.closest('.member').remove(); state.settingsDirty = true;
+  });
+  $('#s-add').addEventListener('click', () => {
+    state.settingsDirty = true;
+    const id = 'm' + Math.random().toString(36).slice(2, 8);
+    $('#members').insertAdjacentHTML('beforeend', memberRow({ id, name: '', slicesPerDay: 4, days: [1,2,3,4,5], preferredDay: 0, notes: '' }));
+    $('#members').lastElementChild.querySelector('.m-name').focus();
+  });
+  $('#s-save').addEventListener('click', async () => {
+    if (!state.db) return;
+    const err = $('#s-err'); err.textContent = '';
+    const s = readSettingsForm();
+    if (s.members.some(m => !m.name)) { err.textContent = 'Alle medlemmer må ha et navn.'; return; }
+    const btn = $('#s-save'); btn.disabled = true;
+    try {
+      await state.db.doc('club/settings').set(s);
+      state.settingsDirty = false; state.settingsJson = '';
+      state.settings = s; render();
+    } catch (ex) {
+      err.textContent = ex && ex.code === 'invalid_argument' ? 'Du har ikke skrivetilgang til innstillingene.' : SAVE_FAIL;
+    } finally { btn.disabled = false; }
+  });
+
+  // ---------- boot ----------
+  async function boot(){
+    const use = window.claude && window.claude.use;
+    if (!use) { state.unavailable = true; render(); return; }
+    const db = await window.claude.use('db');
+    if (!db) { state.unavailable = true; render(); return; }
+    state.db = db;
+    try { const user = await window.claude.use('user'); state.canWrite = user ? await user.can('data.write') : null; } catch (_) { state.canWrite = null; }
+    let gotSettings = false, gotLoaves = false, gotSlices = false;
+    const maybeReady = () => { if (gotSettings && gotLoaves && gotSlices) { state.ready = true; render(); } };
+    const lost = () => { $('#hero-note').textContent = 'Mistet kontakten med den felles loggen. Last siden på nytt.'; };
+    db.doc('club/settings').onSnapshot(snap => { state.settings = snap.exists ? snap.data() : null; gotSettings = true; maybeReady(); }, lost);
+    db.collection('loaves').orderBy('date', 'desc').limit(500).onSnapshot(snap => {
+      const rows = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+      rows.sort((a,b) => (b.date > a.date) - (b.date < a.date) || String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+      state.loaves = rows; gotLoaves = true; maybeReady();
+    }, lost);
+    db.collection('slices').orderBy('date', 'desc').limit(1000).onSnapshot(snap => {
+      state.slices = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+      gotSlices = true; maybeReady();
+    }, lost);
+    setInterval(() => { if (state.ready && !state.editing) render(); }, 15 * 60 * 1000);
+  }
+  boot();
+})();
+</script>
+
+</body>
+</html>
