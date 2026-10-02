@@ -533,7 +533,7 @@ details > *:not(summary){margin-top:12px}
     const monday = addDays(startOfDay(now), -((now.getDay()+6)%7));
     const days = WEEKDAYS.map(d => addDays(monday, d-1));
     const sd = startDate();
-    const head = `<tr><th></th>${days.map(d => `<th>${DAY_SHORT[d.getDay()]} ${pad(d.getDate())}.${pad(d.getMonth()+1)}.</th>`).join('')}<th>Uke</th></tr>`;
+    const head = `<tr><th></th>${days.map(d => `<th>${DAY_SHORT[d.getDay()]} ${pad(d.getDate())}.${pad(d.getMonth()+1)}.</th>`).join('')}<th>Sum</th></tr>`;
     const rows = members().map(m => {
       let sum = 0;
       const cells = days.map(d => {
