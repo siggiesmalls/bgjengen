@@ -226,7 +226,6 @@ details > *:not(summary){margin-top:12px}
       <span class="notice" id="eat-note"></span>
     </div>
     <p class="notice" id="eat-hint" hidden>Velg navnet ditt øverst for å registrere hva du spiste.</p>
-    <p class="notice" id="eat-pre" hidden>Klubben starter ikke før startdatoen. Du kan øve deg nå, men skiver før start teller ikke i regnskapet.</p>
     <div class="today" id="eat-today"></div>
     <div class="sl-wrap"><table class="sl-table" id="sl-table"></table></div>
     <p class="legend">Tall i grått er antatt (vanlig forbruk), ikke registrert. Regnskapet og brødanslaget bruker det som er registrert.</p>
@@ -557,7 +556,6 @@ details > *:not(summary){margin-top:12px}
     if (members().some(m => m.id === cur)) sel.value = cur; else if (me) sel.value = me.id;
     if (!$('#l-date').value) $('#l-date').value = localDate(addDays(now, -1));
     $('#l-date').min = sd && sd <= today ? sd : ''; $('#l-date').max = today;
-    $('#eat-pre').hidden = !beforeStart();
     $('#late-box').hidden = !canWrite;
   }
 
