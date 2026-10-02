@@ -475,7 +475,7 @@ details > *:not(summary){margin-top:12px}
     if (!state.ready || !ms.length) { box.hidden = true; return; }
     box.hidden = false;
     if (state.me && !member(state.me)) state.me = null;
-    $('#iam-chips').innerHTML = `<button type="button" class="small pill guest${state.me ? '' : ' sel'}" data-me="">turist</button>` + ms.map(m => `<button type="button" class="small pill${state.me === m.id ? ' sel' : ''}" data-me="${esc(m.id)}">${esc(m.name || 'Uten navn')}</button>`).join('');
+    $('#iam-chips').innerHTML = `<button type="button" class="small pill guest${state.me ? '' : ' sel'}" data-me="">en turist</button>` + ms.map(m => `<button type="button" class="small pill${state.me === m.id ? ' sel' : ''}" data-me="${esc(m.id)}">${esc(m.name || 'Uten navn')}</button>`).join('');
   }
 
   function renderAlert(){
