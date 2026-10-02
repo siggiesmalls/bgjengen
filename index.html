@@ -54,6 +54,7 @@ button.small{padding:4px 10px;font-size:13px}
 button.pill{border-radius:var(--r-pill)}
 button.danger{background:var(--fb-error);color:var(--error)}
 button.sel{background:var(--black);color:var(--white)}
+button.guest{font-style:italic}
 button:disabled{opacity:.5;cursor:default}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
 input,select,textarea{border:0;box-shadow:inset 0 0 0 1px var(--input-border);background:var(--white);border-radius:var(--r-md);padding:10px 12px;min-width:0;width:100%;line-height:1.4}
@@ -474,7 +475,7 @@ details > *:not(summary){margin-top:12px}
     if (!state.ready || !ms.length) { box.hidden = true; return; }
     box.hidden = false;
     if (state.me && !member(state.me)) state.me = null;
-    $('#iam-chips').innerHTML = `<button type="button" class="small pill${state.me ? '' : ' sel'}" data-me="">bare titter</button>` + ms.map(m => `<button type="button" class="small pill${state.me === m.id ? ' sel' : ''}" data-me="${esc(m.id)}">${esc(m.name || 'Uten navn')}</button>`).join('');
+    $('#iam-chips').innerHTML = `<button type="button" class="small pill guest${state.me ? '' : ' sel'}" data-me="">turist</button>` + ms.map(m => `<button type="button" class="small pill${state.me === m.id ? ' sel' : ''}" data-me="${esc(m.id)}">${esc(m.name || 'Uten navn')}</button>`).join('');
   }
 
   function renderAlert(){
