@@ -19,19 +19,16 @@ GitHub Pages.
   is no build step and the page must stay a single static file plus `assets/`.
 - `boot()` at the bottom of `index.html` holds `FIREBASE_CONFIG` and the four
   subscriptions:
-  - `club/settings` (one document: members, slicesPerLoaf, startDate, whatToBuy)
+  - `club/settings` (one document: members, slicesPerLoaf, whatToBuy)
   - `loaves` collection (buyer, date YYYY-MM-DD, slices, note, createdAt)
   - `slices` collection, doc id `<date>_<memberId>` (member, date, slices, updatedAt;
     an absence registered ahead is `slices: 0, absent: true`)
   - `adjustments` collection: manual stock corrections (date, from, to, delta,
-    shares {memberId: slices}, by, createdAt). If the rules don't allow it, the
-    page still works and only the correction is refused.
-- No login, by the owner's choice: everyone is a writer (`state.canWrite = true`)
-  and members pick who they are with "Jeg er …". `firestore.rules` is the copy
+    shares {memberId: slices}, by, createdAt). Deleting one reverts both the
+    stock and every member's share.
+- No login, by the owner's choice: everyone can write, and members pick who they are with "Jeg er …". `firestore.rules` is the copy
   of the published rules: open read/write on exactly those four paths. Rules
   are published by hand in the Firebase console.
-- A write that Firestore rejects with `permission-denied` shows the "no write
-  access" messages.
 
 ### Seed data
 `club/settings` was created with:
@@ -58,7 +55,8 @@ GitHub Pages.
 - Registering a loaf needs the slice count (no default).
 - Preferred days decide *when* in the week, never *who*.
 - Never buy on Fridays (`NO_BUY_DAYS = [5]`); Thursday covers Friday.
-- Loaves before `startDate` are ignored. Balances never reset.
+- Nothing before `START` (2026-10-12, a constant; the old startDate setting is
+  gone) counts. Balances never reset.
 - "Jeg er …" selection is per device in `localStorage` (`breadclub.me`).
 
 ## Deploy

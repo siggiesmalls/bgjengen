@@ -16,10 +16,10 @@
   --black:#000000; --white:#ffffff; --bg-default:#f9f9fa; --bg-image:#f6f6f6; --bg-button:#e5e5e5; --divider:#00000015;
   --text-secondary:#717171; --dim-gray:#777777;
   --primary:#35a581; --primary-dark:#2a8568; --primary-light:#d7ede6;
-  --deep-teal:#005a4a; --deep-teal-light:#33796c; --teal:#006b6b;
+  --deep-teal:#005a4a; --teal:#006b6b;
   --member:#de3247; --member-light:#ffe3e5;
-  --stock-in:#01d26a; --success:#005605; --error:#c90019; --warning:#ed6c02; --release:#8d7100; --info-dark:#3452c1;
-  --fb-error:#c900191a; --fb-warning:#ed6c021a; --fb-success:#0056051a; --fb-info:#5c78e51a;
+  --stock-in:#01d26a; --success:#005605; --error:#c90019; --warning:#ed6c02; --release:#8d7100;
+  --fb-error:#c900191a; --fb-success:#0056051a;
   --input-border:#999999; --control-border:#dddddd;
   --r-xs:3px; --r-sm:4px; --r-md:8px; --r-lg:12px; --r-pill:999px;
   --sans:Poppins,"Poppins Fallback",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
@@ -40,10 +40,7 @@ h2{font-size:20px;font-weight:500;line-height:1.5;margin-bottom:8px}
 h3{font-size:18px;font-weight:600;line-height:1.5}
 p{margin:0}
 .sub{color:var(--text-secondary);font-size:13px}
-.overline{font-size:12px;line-height:1.2;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--text-secondary)}
 .num{font-variant-numeric:tabular-nums}
-a{color:var(--deep-teal);text-decoration:underline dotted 2px;text-underline-offset:3px}
-a:hover{text-decoration:underline solid 3px}
 
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer;border:0;background:var(--bg-button);color:var(--black);border-radius:var(--r-md);padding:8px 12px;font-size:14px;font-weight:500;line-height:1.75}
@@ -84,7 +81,6 @@ label > input, label > select, label > textarea{font-weight:400;letter-spacing:0
 }
 
 #hero-note:empty{display:none}
-.buy{display:grid;gap:2px;background:var(--bg-image);border-radius:var(--r-md);padding:12px 16px}
 .notice{color:var(--text-secondary);font-size:13px}
 .err{color:var(--error);font-size:13px}
 .ok{color:var(--success);font-size:13px}
@@ -142,8 +138,6 @@ ol.queue li small{font-size:11px;opacity:.75}
 .stepper button{border-radius:0;background:var(--white);padding:6px 14px;font-size:18px;line-height:1;font-weight:500}
 .stepper button:hover{background:var(--bg-button)}
 .stepper .v{min-width:44px;text-align:center;font-weight:600;font-size:18px;font-variant-numeric:tabular-nums}
-.eat .today{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:13px;color:var(--text-secondary)}
-.eat .today b{color:var(--black);font-weight:600}
 .sl-table{width:100%;border-collapse:collapse;font-size:13px}
 .sl-table th,.sl-table td{padding:6px 4px;text-align:center;border-top:1px solid var(--divider);font-variant-numeric:tabular-nums}
 .sl-table th{color:var(--text-secondary);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-top:0}
@@ -177,7 +171,6 @@ ul.log .l small{color:var(--text-secondary);font-size:13px}
 .empty{color:var(--text-secondary)}
 .emptyl{display:flex;gap:16px;align-items:center}
 .emptyl img{width:88px;height:auto}
-ul.rules{margin:0;padding-left:1.2em;display:grid;gap:4px}
 
 details{background:var(--white);border:1px solid var(--divider);border-radius:var(--r-md);padding:12px 16px}
 summary{cursor:pointer;font-weight:500;font-size:14px;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px}
@@ -247,7 +240,6 @@ details > *:not(summary){margin-top:12px}
       <span class="notice" id="eat-note"></span>
     </div>
     <p class="notice" id="eat-hint" hidden>Velg navnet ditt øverst for å registrere hva du spiste.</p>
-    <div class="today" id="eat-today"></div>
     <div class="sl-wrap"><table class="sl-table" id="sl-table"></table></div>
     <p class="legend">Grått er ikke registrert. En dag uten registrering teller som 0 skiver når dagen er over.</p>
     <details id="away-box">
@@ -329,7 +321,6 @@ details > *:not(summary){margin-top:12px}
       <button type="button" id="s-add" class="small">Legg til medlem</button>
       <label style="flex-direction:row;display:flex;align-items:center;gap:8px">Skiver per brød <input type="number" id="s-spl" min="1" max="60" step="1" style="width:80px"></label>
     </div>
-    <label>Startdato (brød før denne datoen teller ikke i regnskapet)<input type="date" id="s-start"></label>
     <label>Hva vi kjøper (merke, type, oppskåret eller ikke, hvor)<textarea id="s-buy" maxlength="400" placeholder="f.eks. Kneippbrød, grovt, oppskåret, fra Rema på hjørnet"></textarea></label>
     <div class="settings-foot">
       <button type="button" class="primary" id="s-save">Lagre innstillinger</button>
@@ -351,11 +342,12 @@ details > *:not(summary){margin-top:12px}
   const BUY_DAYS = WEEKDAYS.filter(d => !NO_BUY_DAYS.includes(d));
   // From this date a day without a registration counts as 0 slices. Before it, an unregistered office day counts the person's usual amount.
   const ZERO_FROM = '2026-10-26';
+  const START = '2026-10-12'; // the club's first day: nothing before it counts
   const LS_KEY = 'breadclub.me';
   const OUTLY_CRYING = 'assets/outly-crying.png';
   const OUTLY_SEARCHING = 'assets/outly-searching.png';
 
-  const state = { db:null, canWrite:null, settings:null, loaves:[], slices:[], adjustments:[], adjOk:true, ready:false, unavailable:false, settingsJson:'', settingsDirty:false, editing:false, me:null, flash:'', focus:'' };
+  const state = { db:null, settings:null, loaves:[], slices:[], adjustments:[], ready:false, settingsJson:'', settingsDirty:false, editing:false, me:null, flash:'', focus:'' };
   try { state.me = localStorage.getItem(LS_KEY) || null; } catch (_) {}
 
   const pad = n => String(n).padStart(2,'0');
@@ -382,10 +374,7 @@ details > *:not(summary){margin-top:12px}
   function weeklySlices(){ return WEEKDAYS.reduce((a,d) => a + dailySlices(d), 0); }
   function nameOf(id){ const m = member(id); return m ? (m.name || 'Uten navn') : 'Tidligere medlem'; }
   function inOffice(m, jsDay){ return (m.days||[]).includes(jsDay); }
-  function startDate(){ const v = state.settings && state.settings.startDate; return isDate(v) ? v : ''; }
-  function beforeStart(){ const sd = startDate(); return sd && localDate() < sd; }
-  function counts(ds){ const sd = startDate(); return !sd || ds >= sd; }
-  function loaves(){ return state.loaves.filter(l => counts(l.date)); }
+  function loaves(){ return state.loaves.filter(l => l.date >= START); }
   function loafSize(l){ const n = Number(l.slices); return n > 0 ? n : slicesPerLoaf(); }
 
   // Slice registrations by "<date>|<member>". An absence is a registration of 0 with absent: true.
@@ -402,10 +391,6 @@ details > *:not(summary){margin-top:12px}
   // Slices planned for a day, for display: the registration if any, else the usual amount on an office day.
   function plannedOn(map, m, ds, jsDay){ const v = loggedOn(map, m.id, ds); return v !== null ? v : (inOffice(m, jsDay) ? usual(m) : 0); }
   function presentOn(map, m, ds, jsDay){ return inOffice(m, jsDay) && !isAbsent(map, m.id, ds); }
-  function firstDay(){
-    const sd = startDate(); if (sd) return sd;
-    return [...state.loaves.map(l => l.date), ...state.slices.map(r => r.date)].filter(isDate).sort()[0] || '';
-  }
 
   // Ledger in slices: contributed = slices in loaves bought + stock corrections; eaten = counted slices. Stock = everything bought + corrections − everything eaten.
   function ledger(){
@@ -419,18 +404,13 @@ details > *:not(summary){margin-top:12px}
       Object.entries(a.shares || {}).forEach(([id, n]) => { if (per[id]) per[id].contributed += Number(n) || 0; });
     });
     let eatenAll = 0;
-    const from = firstDay();
-    if (from) {
-      let d = parseDate(from), guard = 0;
-      while (localDate(d) <= today && guard++ < 4000) {
-        const ds = localDate(d), jd = d.getDay();
-        ms.forEach(m => { const n = eatenOn(map, m, ds, jd); per[m.id].eaten += n; eatenAll += n; });
-        d = addDays(d, 1);
-      }
+    for (let d = parseDate(START); localDate(d) <= today; d = addDays(d, 1)) {
+      const ds = localDate(d), jd = d.getDay();
+      ms.forEach(m => { const n = eatenOn(map, m, ds, jd); per[m.id].eaten += n; eatenAll += n; });
     }
     // Slices registered by people who have left the club still left the stock.
     const ids = new Set(ms.map(m => m.id));
-    state.slices.forEach(r => { if (!ids.has(r.member) && isDate(r.date) && r.date <= today && counts(r.date)) eatenAll += Number(r.slices) || 0; });
+    state.slices.forEach(r => { if (!ids.has(r.member) && isDate(r.date) && r.date <= today && r.date >= START) eatenAll += Number(r.slices) || 0; });
     const rows = ms.map(m => { const p = per[m.id]; p.balance = p.contributed - p.eaten; return p; });
     return { rows, stock: total - eatenAll };
   }
@@ -440,7 +420,7 @@ details > *:not(summary){margin-top:12px}
   // Day-by-day projection from today: stock and balances move with expected eating; whoever is furthest behind buys.
   function simulate(L, nDays){
     const ms = members(), map = sliceMap();
-    const now = new Date(), today = localDate(now), sd = startDate();
+    const now = new Date(), today = localDate(now);
     const bal = {}, bought = {}, last = {};
     L.rows.forEach(p => { bal[p.m.id] = p.balance; bought[p.m.id] = p.bought; last[p.m.id] = p.last; });
     const eligible = ms.filter(eats);
@@ -454,27 +434,25 @@ details > *:not(summary){margin-top:12px}
       const d = addDays(startOfDay(now), i), jd = d.getDay();
       if (isWeekend(jd)) continue;
       const ds = localDate(d);
-      const cell = { date: ds, jsDay: jd, today: ds === today, past: ds === today && lunchDone(), pre: !!sd && ds < sd, noBuy: NO_BUY_DAYS.includes(jd), buyer: null, why: '',
+      const cell = { date: ds, jsDay: jd, today: ds === today, past: ds === today && lunchDone(), noBuy: NO_BUY_DAYS.includes(jd), buyer: null, why: '',
         slices: ms.reduce((a,m) => a + plannedOn(map, m, ds, jd), 0) };
-      if (!cell.pre) {
-        const need = dayNeed(d);
-        if (!cell.past && !cell.noBuy && !boughtDays.has(ds) && eligible.length) {
-          // Slices needed today plus on the no-buy days that follow directly (Friday), so Thursday covers Friday.
-          let ahead = need;
-          for (let n = 1; n < 4; n++) { const nd = addDays(d, n); if (isWeekend(nd.getDay()) || !NO_BUY_DAYS.includes(nd.getDay())) break; ahead += dayNeed(nd); }
-          const head = rank(eligible);
-          let buyer = null, why = '';
-          if (stock < ahead && ahead > 0) {
-            buyer = rank(eligible.filter(m => presentOn(map, m, ds, jd)));
-            if (buyer) why = buyer === head ? (stock < need ? 'brødet tar slutt' : 'holder til fredag') : 'dekker for ' + head.name;
-          } else if (presentOn(map, head, ds, jd) && Number(head.preferredDay) === jd && need > 0 && stock < ahead * 2 + 1) {
-            buyer = head; why = 'foretrukket dag';
-          }
-          if (buyer) { cell.buyer = buyer; cell.why = why; stock += loaf; bal[buyer.id] += loaf; bought[buyer.id]++; last[buyer.id] = ds; }
+      const need = dayNeed(d);
+      if (!cell.past && !cell.noBuy && !boughtDays.has(ds) && eligible.length) {
+        // Slices needed today plus on the no-buy days that follow directly (Friday), so Thursday covers Friday.
+        let ahead = need;
+        for (let n = 1; n < 4; n++) { const nd = addDays(d, n); if (isWeekend(nd.getDay()) || !NO_BUY_DAYS.includes(nd.getDay())) break; ahead += dayNeed(nd); }
+        const head = rank(eligible);
+        let buyer = null, why = '';
+        if (stock < ahead && ahead > 0) {
+          buyer = rank(eligible.filter(m => presentOn(map, m, ds, jd)));
+          if (buyer) why = buyer === head ? (stock < need ? 'brødet tar slutt' : 'holder til fredag') : 'dekker for ' + head.name;
+        } else if (presentOn(map, head, ds, jd) && Number(head.preferredDay) === jd && need > 0 && stock < ahead * 2 + 1) {
+          buyer = head; why = 'foretrukket dag';
         }
-        ms.forEach(m => { bal[m.id] -= toEatOn(map, m, ds, jd); });
-        stock = Math.max(0, stock - need);
+        if (buyer) { cell.buyer = buyer; cell.why = why; stock += loaf; bal[buyer.id] += loaf; bought[buyer.id]++; last[buyer.id] = ds; }
       }
+      ms.forEach(m => { bal[m.id] -= toEatOn(map, m, ds, jd); });
+      stock = Math.max(0, stock - need);
       days.push(cell);
     }
     return days;
@@ -524,7 +502,7 @@ details > *:not(summary){margin-top:12px}
 
   function renderAlert(){
     const el = $('#alert');
-    if (!state.ready || !members().length || beforeStart()) { el.hidden = true; return; }
+    if (!state.ready || !members().length) { el.hidden = true; return; }
     const { L, sim } = model();
     if (L.stock > 0) { el.hidden = true; return; }
     const todayCell = sim[0] && sim[0].today ? sim[0] : null;
@@ -540,14 +518,12 @@ details > *:not(summary){margin-top:12px}
   function renderHero(){
     const note = $('#hero-note');
     const bLog = $('#btn-log');
-    if (state.unavailable) { note.textContent = 'Den felles loggen er bare synlig for innloggede medlemmer.'; bLog.hidden = true; return; }
     if (!state.ready) return;
     if (!members().length) { note.textContent = 'Ingen medlemmer ennå. Åpne «Medlemmer og innstillinger» nederst og legg til alle.'; bLog.hidden = true; $('#settings').open = true; return; }
     if (!members().some(eats)) { note.textContent = 'Gi hvert medlem noen skiver per dag og noen kontordager.'; bLog.hidden = true; return; }
-    const canWrite = state.canWrite !== false;
-    bLog.hidden = !canWrite || state.editing;
+    bLog.hidden = state.editing;
     note.className = state.flash ? 'ok' : 'notice';
-    note.textContent = state.flash || (canWrite ? '' : 'Du kan se loggen, men ikke legge til. Be eieren om bidragsyter-tilgang.');
+    note.textContent = state.flash;
   }
 
   function memberOptions(sel, preferId){
@@ -564,24 +540,16 @@ details > *:not(summary){margin-top:12px}
     const map = sliceMap();
     const now = new Date();
     const today = localDate(now);
-    const canWrite = state.canWrite !== false;
-    $('#eat-me').hidden = !me || !canWrite;
-    $('#eat-hint').hidden = !!me || !canWrite;
+    $('#eat-me').hidden = !me;
+    $('#eat-hint').hidden = !!me;
     if (me) {
       const logged = loggedOn(map, me.id, today);
       if (!state.eatEditing) { state.eatVal = logged !== null ? logged : (inOffice(me, now.getDay()) ? usual(me) : 0); }
       $('#eat-val').textContent = state.eatVal;
       $('#eat-label').textContent = isAbsent(map, me.id, today) ? 'Du er meldt borte i dag. Spiste du likevel?' : logged !== null ? `Du har registrert ${logged} i dag. Endre:` : 'Hvor mange skiver spiste du i dag?';
     }
-    // Today, everyone
-    $('#eat-today').innerHTML = members().map(m => {
-      const v = loggedOn(map, m.id, today);
-      const txt = isAbsent(map, m.id, today) ? 'borte' : v !== null ? skiver(v) : (inOffice(m, now.getDay()) ? 'ikke registrert' : 'ikke på kontoret');
-      return `<span>${esc(m.name)}: <b>${txt}</b></span>`;
-    }).join('');
     // This week table
     const days = WEEKDAYS.map(d => addDays(mondayOf(now), d-1));
-    const sd = startDate();
     const head = `<tr><th></th>${days.map(d => `<th>${DAY_SHORT[d.getDay()]}<span class="dt">${pad(d.getDate())}.${pad(d.getMonth()+1)}.</span></th>`).join('')}<th>Sum</th></tr>`;
     const rows = members().map(m => {
       let sum = 0;
@@ -590,8 +558,8 @@ details > *:not(summary){margin-top:12px}
         const v = loggedOn(map, m.id, ds);
         let txt, cls = ds === today ? 'tod' : '';
         if (isAbsent(map, m.id, ds)) { txt = 'borte'; cls += ' est'; }
-        else if (v !== null) { txt = v; if (ds <= today && !(sd && ds < sd)) sum += v; }
-        else if ((sd && ds < sd) || ds >= today) { txt = '·'; cls += ' est'; }
+        else if (v !== null) { txt = v; if (ds <= today) sum += v; }
+        else if (ds >= today) { txt = '·'; cls += ' est'; }
         else { const n = eatenOn(map, m, ds, jd); txt = n || (inOffice(m, jd) ? 0 : '–'); sum += n; cls += ' est'; }
         return `<td class="${cls.trim()}">${txt}</td>`;
       }).join('');
@@ -601,14 +569,12 @@ details > *:not(summary){margin-top:12px}
     // Late form
     memberOptions($('#l-who'), me && me.id);
     if (!$('#l-date').value) $('#l-date').value = localDate(addDays(now, -1));
-    $('#l-date').min = sd && sd <= today ? sd : ''; $('#l-date').max = today;
-    $('#late-box').hidden = !canWrite;
+    $('#l-date').min = START; $('#l-date').max = today;
     // Absence form
     memberOptions($('#w-who'), me && me.id);
     if (!$('#w-from').value) $('#w-from').value = today;
     if (!$('#w-to').value) $('#w-to').value = $('#w-from').value;
     $('#w-from').min = today; $('#w-to').min = $('#w-from').value || today;
-    $('#away-box').hidden = !canWrite;
   }
 
   function renderPlan(){
@@ -618,7 +584,7 @@ details > *:not(summary){margin-top:12px}
     if (!members().some(eats)) { el.innerHTML = ''; noteEl.textContent = 'Legg til medlemmer for å få en plan.'; return; }
     const { sim } = model();
     const simBy = Object.fromEntries(sim.map(c => [c.date, c]));
-    const map = sliceMap(), ms = members(), sd = startDate();
+    const map = sliceMap(), ms = members();
     const now = new Date(), today = localDate(now);
     const boughtOn = {};
     state.loaves.forEach(l => { (boughtOn[l.date] = boughtOn[l.date] || []).push(l); });
@@ -634,7 +600,7 @@ details > *:not(summary){margin-top:12px}
       let who, s, buy, dim;
       if (ds < today) {
         // History: who bought, and the slices counted that day.
-        const pre = sd && ds < sd;
+        const pre = ds < START;
         const eaten = ms.reduce((a,m) => a + eatenOn(map, m, ds, jd), 0);
         buy = actual.length > 0; dim = !buy;
         who = actual.join(', ');
@@ -643,8 +609,8 @@ details > *:not(summary){margin-top:12px}
         const c = simBy[ds] || { slices: 0 };
         if (actual.length) { buy = true; who = actual.join(', '); s = 'kjøpt'; }
         else if (c.buyer) { buy = true; who = c.buyer.name; s = c.why; }
-        else { buy = false; who = c.past || c.pre ? '' : '—'; s = c.pre ? 'før start' : (c.noBuy ? `${skiver(c.slices)} · aldri kjøp` : (c.slices ? skiver(c.slices) : 'ingen på jobb')); }
-        dim = !buy && (c.past || c.pre);
+        else { buy = false; who = c.past ? '' : '—'; s = c.noBuy ? `${skiver(c.slices)} · aldri kjøp` : (c.slices ? skiver(c.slices) : 'ingen på jobb'); }
+        dim = !buy && c.past;
       }
       const cls = ['cell', buy ? 'buy' : '', isToday ? 'today' : '', dim ? 'past' : ''].filter(Boolean).join(' ');
       return `<div class="${cls}"><span class="d">${DAY_SHORT[jd]}${isToday ? ' · i dag' : ''}</span><span class="n">${esc(who)}</span><span class="s">${esc(s)}</span></div>`;
@@ -692,7 +658,7 @@ details > *:not(summary){margin-top:12px}
     else { tone = 'in'; dot = 'var(--stock-in)'; lbl = ro ? `Holder til rundt ${DAY_LONG[ro.getDay()]} lunsj` : 'Holder over en uke'; }
     const latest = loaves()[0];
     const latestTxt = latest ? `Siste brød: ${fmtDate(latest.date)} av ${nameOf(latest.buyer)} (${skiver(loafSize(latest))}).` : 'Ingen brød registrert ennå.';
-    const canAdj = state.canWrite !== false && $('#adj-form').hidden;
+    const canAdj = $('#adj-form').hidden;
     el.innerHTML = `<div class="stock-head"><span class="big">${n}</span><span class="unit">${Math.abs(n) === 1 ? 'skive' : 'skiver'}</span>${canAdj ? '<button type="button" class="small" id="adj-open">Juster</button>' : ''}</div>
       <div class="stock"><span class="dot" style="background:${dot}"></span><div><span class="lbl ${tone}">${esc(lbl)}</span><br>${esc(latestTxt)}<br><span class="notice">Alle registrerte brød minus alle registrerte skiver.</span></div></div>`;
   }
@@ -709,20 +675,17 @@ details > *:not(summary){margin-top:12px}
   function renderLog(){
     const el = $('#log');
     if (!state.ready) return;
-    const sd = startDate();
     const items = logItems();
     if (!items.length) { el.innerHTML = `<li class="emptyl"><img src="${OUTLY_SEARCHING}" alt=""></li>`; return; }
-    const canDel = state.canWrite !== false;
-    const pre = ds => sd && ds < sd ? ' <span class="chip">før start, teller ikke</span>' : '';
     el.innerHTML = items.slice(0, 60).map(it => {
       const r = it.r;
       let title, small;
-      if (it.kind === 'loaves') { title = `${esc(nameOf(r.buyer))} kjøpte brød${pre(r.date)}`; small = `${esc(fmtDate(r.date))} · +${esc(skiver(loafSize(r)))}${r.note ? ' · ' + esc(r.note) : ''}`; }
-      else if (it.kind === 'slices') { title = r.absent ? `${esc(nameOf(r.member))} er borte${pre(r.date)}` : `${esc(nameOf(r.member))} spiste ${esc(skiver(Number(r.slices) || 0))}${pre(r.date)}`; small = esc(fmtDate(r.date)); }
+      if (it.kind === 'loaves') { title = `${esc(nameOf(r.buyer))} kjøpte brød`; small = `${esc(fmtDate(r.date))} · +${esc(skiver(loafSize(r)))}${r.note ? ' · ' + esc(r.note) : ''}`; }
+      else if (it.kind === 'slices') { title = r.absent ? `${esc(nameOf(r.member))} er borte` : `${esc(nameOf(r.member))} spiste ${esc(skiver(Number(r.slices) || 0))}`; small = esc(fmtDate(r.date)); }
       else { title = `Lageret justert fra ${esc(r.from)} til ${esc(r.to)}`; small = `${esc(fmtDate(r.date))} · ${esc(sharesText(r.shares || {})) || 'ingen fordeling'}`; }
       return `<li data-id="${esc(it.id)}" data-kind="${it.kind}">
       <div class="l"><span>${title}</span><small>${small}</small></div>
-      ${canDel ? '<button type="button" class="small del">Fjern</button>' : ''}
+      <button type="button" class="small del">Fjern</button>
     </li>`;
     }).join('');
   }
@@ -736,7 +699,6 @@ details > *:not(summary){margin-top:12px}
     if (json === state.settingsJson || state.settingsDirty) return;
     state.settingsJson = json;
     $('#s-spl').value = slicesPerLoaf();
-    $('#s-start').value = startDate();
     $('#s-buy').value = (state.settings && state.settings.whatToBuy) || '';
     $('#members').innerHTML = members().map(memberRow).join('');
   }
@@ -768,14 +730,11 @@ details > *:not(summary){margin-top:12px}
       notes: r.querySelector('.m-notes').value.trim(),
     }));
     const spl = Math.max(1, Math.round(Number($('#s-spl').value) || 18));
-    const sdv = $('#s-start').value;
-    return { slicesPerLoaf: spl, members: ms, whatToBuy: $('#s-buy').value.trim(), startDate: isDate(sdv) ? sdv : '' };
+    return { slicesPerLoaf: spl, members: ms, whatToBuy: $('#s-buy').value.trim() };
   }
 
   // ---------- writes ----------
-  const NO_ACCESS = 'Du har ikke skrivetilgang til loggen.';
   const SAVE_FAIL = 'Kunne ikke lagre. Prøv igjen om et øyeblikk.';
-  const failMsg = ex => ex && ex.code === 'permission-denied' ? NO_ACCESS : SAVE_FAIL;
   async function saveLoaf(buyer, date, slices, note){
     await state.db.collection('loaves').add({ buyer, date, slices, note, createdAt: new Date().toISOString() });
   }
@@ -791,8 +750,8 @@ details > *:not(summary){margin-top:12px}
   function openForm(buyerId, date){
     state.editing = true;
     $('#log-form').hidden = false;
-    $('#f-date').value = date || (beforeStart() ? startDate() : localDate());
-    $('#f-date').min = startDate() || '';
+    $('#f-date').value = date || localDate();
+    $('#f-date').min = START;
     $('#f-slices').value = '';
     $('#f-note').value = '';
     $('#f-err').textContent = '';
@@ -809,7 +768,7 @@ details > *:not(summary){margin-top:12px}
     if (!state.db || !state.me) return;
     const btn = $('#eat-save'); btn.disabled = true; const note = $('#eat-note'); note.className = 'notice'; note.textContent = '';
     try { await saveSlices(state.me, localDate(), state.eatVal||0); state.eatEditing = false; note.className = 'ok'; note.textContent = 'Registrert!'; setTimeout(() => { note.textContent = ''; }, 3000); }
-    catch (ex) { note.className = 'err'; note.textContent = failMsg(ex); }
+    catch { note.className = 'err'; note.textContent = SAVE_FAIL; }
     finally { btn.disabled = false; }
   });
   $('#late-form').addEventListener('submit', async e => {
@@ -818,10 +777,10 @@ details > *:not(summary){margin-top:12px}
     const who = $('#l-who').value, date = $('#l-date').value, n = Math.round(Number($('#l-slices').value));
     const err = $('#l-err'); err.className = 'err'; err.textContent = '';
     if (!who) { err.textContent = 'Velg hvem.'; return; }
-    if (!isDate(date) || date > localDate()) { err.textContent = 'Velg en dato som har vært.'; return; }
+    if (!isDate(date) || date > localDate() || date < START) { err.textContent = 'Velg en dato som har vært, fra klubbens start.'; return; }
     if ($('#l-slices').value === '' || !(n >= 0)) { err.textContent = 'Skriv antall skiver.'; return; }
     try { await saveSlices(who, date, n); err.className = 'ok'; err.textContent = `Lagret: ${nameOf(who)}, ${skiver(n)} ${fmtDate(date)}.`; $('#l-slices').value = ''; }
-    catch (ex) { err.textContent = failMsg(ex); }
+    catch { err.textContent = SAVE_FAIL; }
   });
   $('#w-from').addEventListener('change', () => { const f = $('#w-from').value; if (isDate(f) && (!isDate($('#w-to').value) || $('#w-to').value < f)) $('#w-to').value = f; $('#w-to').min = f; });
   $('#away-form').addEventListener('submit', async e => {
@@ -845,7 +804,7 @@ details > *:not(summary){margin-top:12px}
       await Promise.all(dates.map(ds => saveAbsence(m.id, ds)));
       err.className = 'ok';
       err.textContent = `Lagret: ${m.name} er borte ${dates.length === 1 ? fmtDate(dates[0]) : `${dates.length} kontordager, ${fmtDate(dates[0])}–${fmtDate(dates[dates.length-1])}`}. Angres i Logg.`;
-    } catch (ex) { err.textContent = failMsg(ex); }
+    } catch { err.textContent = SAVE_FAIL; }
   });
 
   // Stock correction
@@ -872,7 +831,6 @@ details > *:not(summary){margin-top:12px}
     const err = $('#a-err'); err.textContent = '';
     const v = $('#a-val').value, n = Number(v);
     if (v === '' || !Number.isInteger(n) || n < 0) { err.textContent = 'Skriv antall skiver som faktisk er igjen.'; return; }
-    if (!state.adjOk) { err.textContent = 'Lagerjustering er ikke slått på i databasen ennå.'; return; }
     const { L } = model();
     const delta = n - L.stock;
     if (!delta) { closeAdjust(); return; }
@@ -880,7 +838,7 @@ details > *:not(summary){margin-top:12px}
     try {
       await state.db.collection('adjustments').add({ date: localDate(), from: L.stock, to: n, delta, shares: splitDelta(delta, L.rows), by: state.me || '', createdAt: new Date().toISOString() });
       closeAdjust(); flash(`Lageret er justert til ${skiver(n)}.`);
-    } catch (ex) { err.textContent = ex && ex.code === 'permission-denied' ? 'Lagerjustering er ikke slått på i databasen ennå.' : SAVE_FAIL; btn.disabled = false; }
+    } catch { err.textContent = SAVE_FAIL; btn.disabled = false; }
   });
 
   // ---------- events ----------
@@ -911,16 +869,14 @@ details > *:not(summary){margin-top:12px}
     const err = $('#f-err');
     if (!buyer) { err.textContent = 'Velg hvem som kjøpte.'; return; }
     if (!isDate(date)) { err.textContent = 'Velg en dato.'; return; }
-    if (startDate() && date < startDate()) { err.textContent = `Klubben starter ${fmtDate(startDate())}. Brød før det teller ikke.`; return; }
+    if (date < START) { err.textContent = `Klubben startet ${fmtDate(START)}.`; return; }
     if (!validLoafSlices(sv)) { err.textContent = 'Skriv hvor mange skiver brødet har (1–60).'; return; }
     const btn = $('#f-save'); btn.disabled = true; err.textContent = '';
     try {
       await saveLoaf(buyer, date, Number(sv), note);
       state.editing = false; $('#log-form').hidden = true; flash('Registrert.');
-    } catch (ex) {
-      err.textContent = failMsg(ex);
-      if (ex && ex.code === 'permission-denied') { state.canWrite = false; render(); }
-    } finally { syncLoafSave(); }
+    } catch { err.textContent = SAVE_FAIL; }
+    finally { syncLoafSave(); }
   });
 
   $('#log').addEventListener('click', async e => {
@@ -935,7 +891,6 @@ details > *:not(summary){margin-top:12px}
   $('#members').addEventListener('input', () => { state.settingsDirty = true; });
   $('#s-spl').addEventListener('input', () => { state.settingsDirty = true; });
   $('#s-buy').addEventListener('input', () => { state.settingsDirty = true; });
-  $('#s-start').addEventListener('input', () => { state.settingsDirty = true; });
   $('#members').addEventListener('click', e => {
     const b = e.target.closest('.m-remove'); if (!b) return;
     b.closest('.member').remove(); state.settingsDirty = true;
@@ -957,7 +912,7 @@ details > *:not(summary){margin-top:12px}
       state.settingsDirty = false; state.settingsJson = '';
       state.settings = s; render();
     } catch (ex) {
-      err.textContent = ex && ex.code === 'permission-denied' ? 'Du har ikke skrivetilgang til innstillingene.' : SAVE_FAIL;
+      err.textContent = SAVE_FAIL;
     } finally { btn.disabled = false; }
   });
 
@@ -973,11 +928,9 @@ details > *:not(summary){margin-top:12px}
   };
 
   async function boot(){
-    if (!FIREBASE_CONFIG || !window.firebase) { state.unavailable = true; render(); return; }
     firebase.initializeApp(FIREBASE_CONFIG);
     const db = firebase.firestore();
     state.db = db;
-    state.canWrite = true;
     const got = { settings:false, loaves:false, slices:false, adjustments:false };
     const update = key => { got[key] = true; if (Object.values(got).every(Boolean)) { state.ready = true; render(); } };
     const lost = () => { $('#hero-note').textContent = 'Mistet kontakten med den felles loggen. Last siden på nytt.'; };
@@ -991,11 +944,10 @@ details > *:not(summary){margin-top:12px}
       state.slices = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
       update('slices');
     }, lost);
-    // Stock corrections. If the database rules do not allow this collection yet, the page still works without it.
     db.collection('adjustments').onSnapshot(snap => {
       state.adjustments = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
-      state.adjOk = true; update('adjustments');
-    }, () => { state.adjustments = []; state.adjOk = false; update('adjustments'); });
+      update('adjustments');
+    }, lost);
     setInterval(() => { if (state.ready && !state.editing) render(); }, 15 * 60 * 1000);
   }
   boot();
