@@ -279,6 +279,7 @@ details > *:not(summary){margin-top:12px}
   <section>
     <h2>Rekkefølgen framover</h2>
     <ol class="queue" id="queue"></ol>
+    <div class="row legend" id="cal" hidden><span>Legg kjøpsdagene dine i kalenderen:</span><button type="button" class="small" data-cal="open">Åpne i kalenderen</button><button type="button" class="small" data-cal="copy">Kopier lenke</button></div>
   </section>
 
   <section class="card">
@@ -473,6 +474,8 @@ details > *:not(summary){margin-top:12px}
   }
 
   function model(){ const L = ledger(), sim = simulate(L, 140); return { L, sim, queue: sim.filter(c => c.buyer) }; }
+  // Read by the calendar job (tools/calendar.mjs).
+  window.bgjengenPlan = () => state.ready ? { members: members().map(m => ({ id: m.id, name: m.name })), buys: model().queue.map(c => ({ date: c.date, id: c.buyer.id, why: c.why })) } : null;
 
   // Even split of a stock change over all members. Leftover slices: +1 to the lowest contributors on an increase, −1 from the highest on a decrease.
   function splitDelta(delta, rows){
@@ -642,6 +645,9 @@ details > *:not(summary){margin-top:12px}
     const el = $('#queue');
     if (!state.ready) return;
     const q = model().queue.slice(0, 6);
+    const me = member(state.me);
+    $('#cal').hidden = !me;
+    if (me) $('#cal').dataset.url = new URL(`cal/${me.id}.ics`, location.href).href;
     el.innerHTML = q.length ? q.map((c,i) => `<li><span>${i === 0 ? 'Neste: ' : ''}${esc(c.buyer.name || 'Uten navn')}</span><small>${esc(fmtDate(c.date))}</small></li>`).join('') : '<li class="empty">Ingenting å planlegge ennå.</li>';
   }
 
@@ -850,6 +856,12 @@ details > *:not(summary){margin-top:12px}
   });
   $('#alert').addEventListener('click', e => { if (e.target.closest('[data-act="log"]')) openForm(); if (e.target.closest('[data-act="adjust"]')) openAdjust(); });
   $('#btn-log').addEventListener('click', () => openForm());
+  $('#cal').addEventListener('click', async e => {
+    const b = e.target.closest('[data-cal]'); if (!b) return;
+    const url = $('#cal').dataset.url;
+    if (b.dataset.cal === 'open') { location.href = url.replace(/^https?:/, 'webcal:'); return; }
+    try { await navigator.clipboard.writeText(url); b.textContent = 'Kopiert!'; } catch { prompt('Kopier lenken:', url); }
+  });
   $('#plan-past').addEventListener('click', () => {
     const i = $('#plan-date'); $('#plan-past').hidden = true; i.hidden = false;
     i.max = localDate(); i.value = state.focus || localDate(); i.focus();
