@@ -191,6 +191,15 @@ details > *:not(summary){margin-top:12px}
 .days label{flex-direction:row;display:flex;align-items:center;gap:6px;border:1px solid var(--control-border);background:var(--white);border-radius:var(--r-md);padding:4px 10px;font-weight:400;letter-spacing:0;font-size:13px}
 .settings-foot{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
 .how{display:grid;gap:8px;color:var(--black);max-width:62ch}
+.sec-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.sec-head h2{margin-bottom:0}
+.stock-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.stock-head .big{font-size:32px;font-weight:600;line-height:1.2;font-variant-numeric:tabular-nums}
+.stock-head .unit{color:var(--text-secondary)}
+.stock-head button{margin-left:auto;align-self:center}
+.adj{display:grid;gap:8px;margin-top:16px}
+.adj .row{align-items:end}
+.adj label{flex:0 1 140px}
 @media (prefers-reduced-motion: no-preference){ .bar .fill{transition:width .3s ease} }
 </style>
 
@@ -205,8 +214,7 @@ details > *:not(summary){margin-top:12px}
     <div class="iam" id="iam" hidden>
       <div class="who"><span>Jeg er</span><div class="chips" id="iam-chips"></div></div>
       <div class="acts">
-        <button class="primary" id="btn-quick" type="button" hidden>Jeg kjøpte brød i dag</button>
-        <button id="btn-log" type="button" hidden>+ Registrer et brød</button>
+        <button class="primary" id="btn-log" type="button" hidden>+ Registrer et brød</button>
       </div>
     </div>
   </div>
@@ -215,16 +223,13 @@ details > *:not(summary){margin-top:12px}
 
   <div class="notice" id="hero-note">Åpner klubbens felles logg.</div>
 
-  <form class="card form" id="log-form" hidden>
+  <form class="card form" id="log-form" hidden novalidate>
     <h3>Registrer et brød</h3>
     <div class="grid2">
       <label>Kjøpt av <select id="f-buyer"></select></label>
       <label>Dato <input type="date" id="f-date"></label>
-      <label>Skiver i brødet <input type="number" id="f-slices" min="1" max="60" step="1"></label>
+      <label>Skiver i brødet <input type="number" id="f-slices" min="1" max="60" step="1" inputmode="numeric" required></label>
       <label>Notat (valgfritt) <input type="text" id="f-note" placeholder="Grovbrød, halvt brød, …" maxlength="80"></label>
-    </div>
-    <div class="row">
-      <button type="button" class="small" id="f-yesterday">Glemte å registrere gårsdagens</button>
     </div>
     <div class="row">
       <button class="primary" type="submit" id="f-save">Lagre brød</button>
@@ -244,7 +249,17 @@ details > *:not(summary){margin-top:12px}
     <p class="notice" id="eat-hint" hidden>Velg navnet ditt øverst for å registrere hva du spiste.</p>
     <div class="today" id="eat-today"></div>
     <div class="sl-wrap"><table class="sl-table" id="sl-table"></table></div>
-    <p class="legend">Tall i grått er antatt (vanlig forbruk), ikke registrert. Regnskapet og brødanslaget bruker det som er registrert.</p>
+    <p class="legend">Grått er ikke registrert. En dag uten registrering teller som 0 skiver når dagen er over.</p>
+    <details id="away-box">
+      <summary>Borte eller spiser ikke brød? Meld fra på forhånd</summary>
+      <form class="late" id="away-form" novalidate>
+        <label>Hvem <select id="w-who"></select></label>
+        <label>Fra <input type="date" id="w-from"></label>
+        <label>Til <input type="date" id="w-to"></label>
+        <button type="submit" class="small">Lagre</button>
+        <span class="err" id="w-err"></span>
+      </form>
+    </details>
     <details id="late-box">
       <summary>Glemte en dag? Registrer i etterkant</summary>
       <form class="late" id="late-form">
@@ -258,7 +273,7 @@ details > *:not(summary){margin-top:12px}
   </section>
 
   <section>
-    <h2>Planen</h2>
+    <div class="sec-head"><h2>Planen</h2><div class="row"><button type="button" class="small" id="plan-today" hidden>Til i dag</button><button type="button" class="small" id="plan-past">Se tilbake i tid</button><input type="date" id="plan-date" aria-label="Vis uka rundt denne datoen" hidden style="width:auto"></div></div>
     <div class="week" id="week"></div>
     <p class="legend" id="week-note"></p>
   </section>
@@ -266,7 +281,7 @@ details > *:not(summary){margin-top:12px}
   <section class="card">
     <h2>Regnskapet</h2>
     <div class="bal" id="balances"><p class="empty">Venter på loggen…</p></div>
-    <p class="legend"><i style="background:var(--primary)"></i>brød kjøpt &nbsp; <i style="background:var(--black)"></i>rettferdig andel så langt</p>
+    <p class="legend"><i style="background:var(--primary)"></i>skiver bidratt &nbsp; <i style="background:var(--black)"></i>skiver spist</p>
   </section>
 
   <section>
@@ -275,23 +290,33 @@ details > *:not(summary){margin-top:12px}
   </section>
 
   <section class="card">
-    <h2>Siste brød</h2>
-    <div id="stock" class="stock"><p class="empty">Ingen brød registrert ennå.</p></div>
+    <h2>Skiver på lager</h2>
+    <div id="stock"><p class="empty">Venter på loggen…</p></div>
+    <form class="adj" id="adj-form" hidden novalidate>
+      <div class="row">
+        <label>Riktig antall skiver <input type="number" id="a-val" min="0" max="999" step="1" inputmode="numeric"></label>
+        <button type="submit" class="small primary" id="a-save" disabled>Lagre</button>
+        <button type="button" class="small" id="a-cancel">Avbryt</button>
+      </div>
+      <span class="notice" id="a-preview"></span>
+      <span class="err" id="a-err"></span>
+    </form>
   </section>
 
-  <section class="card">
-    <h2>Logg</h2>
+  <details>
+    <summary>Logg</summary>
     <ul class="log" id="log"></ul>
-  </section>
+  </details>
 
 
   <details>
     <summary>Slik bestemmes turen</summary>
     <div class="how">
-      <p>Hver persons andel er skivene de spiser per uke delt på klubbens totale forbruk. Hvert brød teller som én tur. Den som ligger lengst under sin rettferdige andel, kjøper neste. Ved likt står den som har kjøpt færrest først, deretter den som kjøpte for lengst siden.</p>
+      <p>Regnskapet føres i skiver. Hver person har bidratt med skivene i brødene de har kjøpt, og har spist skivene de har registrert. Den som ligger lengst bak, altså har spist mest i forhold til det de har bidratt med, kjøper neste. Ved likt står den som har kjøpt færrest brød først, deretter den som kjøpte for lengst siden.</p>
       <p>Foretrukne dager avgjør bare <em>når</em> i uka, aldri <em>hvem</em>. Planen legger et kjøp på noens foretrukne dag når brødet er i ferd med å ta slutt, og på neste kontordag når det allerede er tomt.</p>
       <p><b>Vi kjøper aldri brød på fredag.</b> Blir det for lite til fredagslunsjen, legger planen kjøpet på torsdag i stedet, så ingen sitter med et nesten helt brød over helga.</p>
-      <p>Andelen regnes ut fra skivene hver enkelt faktisk har registrert siden start. Dager uten registrering teller med personens vanlige forbruk, så en glemt dag ødelegger ingenting. Før noen har registrert noe, brukes de vanlige tallene.</p>
+      <p>Registrer skivene du spiser hver dag. En dag uten registrering teller som 0 skiver når dagen er over (fram til 25.10.26 ble vanlig forbruk brukt på kontordager). Skal du være borte, meld fra på forhånd, så legger planen ingen kjøp på deg de dagene.</p>
+      <p>Lageret er alle registrerte brød minus alle registrerte skiver. Stemmer ikke tallet, kan det justeres. Forskjellen fordeles likt på alle som bidrag. Går den ikke opp, får den som har bidratt minst den ekstra skiva når lageret økes, og den som har bidratt mest mister den når det minskes.</p>
       <p>Regnskapet nullstilles aldri. Kjøper noen to ganger på rad, tar planen det igjen senere. Å registrere et brød i etterkant (med riktig dato) er helt greit og holder tallene ærlige.</p>
     </div>
   </details>
@@ -321,15 +346,16 @@ details > *:not(summary){margin-top:12px}
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const DAY_LONG = ['søndag','mandag','tirsdag','onsdag','torsdag','fredag','lørdag'];
   const DAY_SHORT = ['søn','man','tir','ons','tor','fre','lør'];
-  const DAY_PL = ['søndager','mandager','tirsdager','onsdager','torsdager','fredager','lørdager'];
   const WEEKDAYS = [1,2,3,4,5];
   const NO_BUY_DAYS = [5]; // never buy on Fridays: the loaf would sit over the weekend
   const BUY_DAYS = WEEKDAYS.filter(d => !NO_BUY_DAYS.includes(d));
+  // From this date a day without a registration counts as 0 slices. Before it, an unregistered office day counts the person's usual amount.
+  const ZERO_FROM = '2026-10-26';
   const LS_KEY = 'breadclub.me';
   const OUTLY_CRYING = 'assets/outly-crying.png';
   const OUTLY_SEARCHING = 'assets/outly-searching.png';
 
-  const state = { db:null, canWrite:null, settings:null, loaves:[], slices:[], ready:false, unavailable:false, settingsJson:'', settingsDirty:false, editing:false, me:null, flash:'' };
+  const state = { db:null, canWrite:null, settings:null, loaves:[], slices:[], adjustments:[], adjOk:true, ready:false, unavailable:false, settingsJson:'', settingsDirty:false, editing:false, me:null, flash:'', focus:'' };
   try { state.me = localStorage.getItem(LS_KEY) || null; } catch (_) {}
 
   const pad = n => String(n).padStart(2,'0');
@@ -337,142 +363,150 @@ details > *:not(summary){margin-top:12px}
   const parseDate = s => { const [y,m,d] = String(s).split('-').map(Number); return new Date(y, (m||1)-1, d||1); };
   const addDays = (d,n) => new Date(d.getFullYear(), d.getMonth(), d.getDate()+n);
   const startOfDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const mondayOf = d => addDays(startOfDay(d), -((d.getDay()+6)%7));
+  const isWeekend = jd => jd === 0 || jd === 6;
   const fmtDate = s => { const d = parseDate(s); return isNaN(d) ? s : `${DAY_SHORT[d.getDay()]} ${pad(d.getDate())}.${pad(d.getMonth()+1)}.${String(d.getFullYear()).slice(2)}`; };
   const fmt1 = n => (Math.round(n*10)/10).toFixed(1).replace('.', ',');
+  const signed = n => (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n);
+  const skiver = n => `${n} ${Math.abs(n) === 1 ? 'skive' : 'skiver'}`;
   const lunchDone = () => new Date().getHours() >= 13;
   const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const isDate = v => /^\d{4}-\d{2}-\d{2}$/.test(v || '');
 
   function members(){ return (state.settings && Array.isArray(state.settings.members)) ? state.settings.members : []; }
   function member(id){ return members().find(m => m.id === id) || null; }
   function slicesPerLoaf(){ const n = Number(state.settings && state.settings.slicesPerLoaf); return n > 0 ? n : 18; }
-  function dailySlices(jsDay){ return members().reduce((a,m) => a + ((m.days||[]).includes(jsDay) ? Number(m.slicesPerDay)||0 : 0), 0); }
+  function usual(m){ return Number(m.slicesPerDay) || 0; }
+  function eats(m){ return usual(m) > 0 && (m.days||[]).length > 0; }
+  function dailySlices(jsDay){ return members().reduce((a,m) => a + ((m.days||[]).includes(jsDay) ? usual(m) : 0), 0); }
   function weeklySlices(){ return WEEKDAYS.reduce((a,d) => a + dailySlices(d), 0); }
   function nameOf(id){ const m = member(id); return m ? (m.name || 'Uten navn') : 'Tidligere medlem'; }
-  function prefLabel(m){ const p = Number(m.preferredDay); return BUY_DAYS.includes(p) ? DAY_LONG[p] : 'hvilken som helst kontordag'; }
   function inOffice(m, jsDay){ return (m.days||[]).includes(jsDay); }
-  function startDate(){ const v = state.settings && state.settings.startDate; return /^\d{4}-\d{2}-\d{2}$/.test(v||'') ? v : ''; }
+  function startDate(){ const v = state.settings && state.settings.startDate; return isDate(v) ? v : ''; }
   function beforeStart(){ const sd = startDate(); return sd && localDate() < sd; }
-  function loaves(){ const sd = startDate(); return sd ? state.loaves.filter(l => l.date >= sd) : state.loaves; }
-  function sliceMap(){ const m = {}; state.slices.forEach(r => { if (r.member && r.date) m[r.date + '|' + r.member] = Number(r.slices) || 0; }); return m; }
-  function loggedOn(map, mId, ds){ const v = map[ds + '|' + mId]; return v === undefined ? null : v; }
-  // Slices a person ate on a date: what they logged, or (if assume) their usual on an office day.
-  function eatenOn(map, m, ds, jsDay, assume){ const v = loggedOn(map, m.id, ds); if (v !== null) return v; return assume && inOffice(m, jsDay) ? (Number(m.slicesPerDay)||0) : 0; }
-  // Which past days count as eaten: up to yesterday, or today once lunch is done. Today before lunch counts only what is logged.
-  function eatenDays(fromDs){
-    const now = new Date(); const today = localDate(now);
-    const out = []; let d = parseDate(fromDs); if (isNaN(d)) return out;
-    let guard = 0;
-    while (localDate(d) <= today && guard++ < 400) { const ds = localDate(d); out.push({ ds, jsDay: d.getDay(), assume: ds < today || lunchDone() }); d = addDays(d, 1); }
-    return out;
-  }
-  function anyLogged(){ const sd = startDate(); return state.slices.some(r => !sd || r.date >= sd); }
+  function counts(ds){ const sd = startDate(); return !sd || ds >= sd; }
+  function loaves(){ return state.loaves.filter(l => counts(l.date)); }
+  function loafSize(l){ const n = Number(l.slices); return n > 0 ? n : slicesPerLoaf(); }
 
-  function stats(){
-    const ms = members();
-    const weekly = ms.map(m => (Number(m.slicesPerDay)||0) * (m.days||[]).length);
-    const totalWeekly = weekly.reduce((a,b)=>a+b,0);
-    const counts = {}, last = {};
-    ms.forEach(m => { counts[m.id] = 0; });
-    let n = 0;
-    loaves().forEach(l => { if (l.buyer in counts) { counts[l.buyer]++; n++; if (!last[l.buyer] || l.date > last[l.buyer]) last[l.buyer] = l.date; } });
-    // Actual consumption since the start date (or the first logged slice), logged where available, usual otherwise.
-    const map = sliceMap();
-    const sd = startDate() || (state.slices.length ? state.slices.map(r => r.date).sort()[0] : '');
-    const useActual = anyLogged() && sd;
-    const days = useActual ? eatenDays(sd) : [];
-    const eaten = ms.map(m => days.reduce((a, d) => a + eatenOn(map, m, d.ds, d.jsDay, d.assume), 0));
-    const totalEaten = eaten.reduce((a,b)=>a+b,0);
-    return ms.map((m,i) => {
-      const share = useActual && totalEaten > 0 ? eaten[i]/totalEaten : (totalWeekly ? weekly[i]/totalWeekly : 0);
-      return { m, weekly: weekly[i], eaten: eaten[i], actual: !!(useActual && totalEaten > 0), share, bought: counts[m.id], fair: share*n, balance: counts[m.id] - share*n, last: last[m.id] || '' };
+  // Slice registrations by "<date>|<member>". An absence is a registration of 0 with absent: true.
+  function sliceMap(){ const out = {}; state.slices.forEach(r => { if (r.member && r.date) out[r.date + '|' + r.member] = r; }); return out; }
+  function loggedOn(map, mId, ds){ const r = map[ds + '|' + mId]; return r ? (Number(r.slices) || 0) : null; }
+  function isAbsent(map, mId, ds){ const r = map[ds + '|' + mId]; return !!(r && r.absent); }
+  // Slices counted as eaten on a day up to today: the registration, else the usual amount on an office day before ZERO_FROM, else 0.
+  function eatenOn(map, m, ds, jsDay){
+    const v = loggedOn(map, m.id, ds); if (v !== null) return v;
+    return ds < ZERO_FROM && ds < localDate() && inOffice(m, jsDay) ? usual(m) : 0;
+  }
+  // Slices expected on a day from today on, beyond what is already registered: registered days (and absences) add nothing, other office days the usual amount.
+  function toEatOn(map, m, ds, jsDay){ return loggedOn(map, m.id, ds) !== null ? 0 : (inOffice(m, jsDay) ? usual(m) : 0); }
+  // Slices planned for a day, for display: the registration if any, else the usual amount on an office day.
+  function plannedOn(map, m, ds, jsDay){ const v = loggedOn(map, m.id, ds); return v !== null ? v : (inOffice(m, jsDay) ? usual(m) : 0); }
+  function presentOn(map, m, ds, jsDay){ return inOffice(m, jsDay) && !isAbsent(map, m.id, ds); }
+  function firstDay(){
+    const sd = startDate(); if (sd) return sd;
+    return [...state.loaves.map(l => l.date), ...state.slices.map(r => r.date)].filter(isDate).sort()[0] || '';
+  }
+
+  // Ledger in slices: contributed = slices in loaves bought + stock corrections; eaten = counted slices. Stock = everything bought + corrections − everything eaten.
+  function ledger(){
+    const ms = members(), map = sliceMap(), today = localDate();
+    const per = {};
+    ms.forEach(m => { per[m.id] = { m, contributed:0, eaten:0, bought:0, last:'' }; });
+    let total = 0;
+    loaves().forEach(l => { const n = loafSize(l); total += n; const p = per[l.buyer]; if (p) { p.contributed += n; p.bought++; if (l.date > p.last) p.last = l.date; } });
+    state.adjustments.forEach(a => {
+      total += Number(a.delta) || 0;
+      Object.entries(a.shares || {}).forEach(([id, n]) => { if (per[id]) per[id].contributed += Number(n) || 0; });
     });
+    let eatenAll = 0;
+    const from = firstDay();
+    if (from) {
+      let d = parseDate(from), guard = 0;
+      while (localDate(d) <= today && guard++ < 4000) {
+        const ds = localDate(d), jd = d.getDay();
+        ms.forEach(m => { const n = eatenOn(map, m, ds, jd); per[m.id].eaten += n; eatenAll += n; });
+        d = addDays(d, 1);
+      }
+    }
+    // Slices registered by people who have left the club still left the stock.
+    const ids = new Set(ms.map(m => m.id));
+    state.slices.forEach(r => { if (!ids.has(r.member) && isDate(r.date) && r.date <= today && counts(r.date)) eatenAll += Number(r.slices) || 0; });
+    const rows = ms.map(m => { const p = per[m.id]; p.balance = p.contributed - p.eaten; return p; });
+    return { rows, stock: total - eatenAll };
   }
 
   function cmpKey(a,b){ for (let i=0;i<a.length;i++){ if (a[i] < b[i]) return -1; if (a[i] > b[i]) return 1; } return 0; }
-  function upcoming(st, k){
-    const eligible = st.filter(s => s.share > 0);
-    if (!eligible.length) return [];
-    const counts = Object.fromEntries(eligible.map(s => [s.m.id, s.bought]));
-    let n = eligible.reduce((a,s) => a + s.bought, 0);
-    const out = [];
-    for (let i = 0; i < k; i++) {
-      let best = null, bestKey = null;
-      eligible.forEach((s, idx) => {
-        const key = [counts[s.m.id] - s.share*n, counts[s.m.id], s.last, idx];
-        if (!best || cmpKey(key, bestKey) < 0) { best = s; bestKey = key; }
-      });
-      out.push(best); counts[best.m.id]++; n++;
-    }
-    return out;
-  }
 
-  function stockEstimate(){
-    const ls = loaves();
-    if (!ls.length) return null;
-    const latest = ls[0];
-    const slices = Number(latest.slices) > 0 ? Number(latest.slices) : slicesPerLoaf();
-    const now = new Date();
-    if (isNaN(parseDate(latest.date))) return null;
-    const map = sliceMap();
-    const ms = members();
-    let consumed = 0;
-    eatenDays(latest.date).forEach(d => { ms.forEach(m => { consumed += eatenOn(map, m, d.ds, d.jsDay, d.assume); }); });
-    const remaining = slices - consumed;
-    let runOut = null;
-    if (remaining > 0) {
-      let r = remaining;
-      let dd = lunchDone() ? addDays(now,1) : startOfDay(now);
-      if (localDate(dd) < latest.date) dd = parseDate(latest.date);
-      for (let i = 0; i < 21; i++) { r -= dailySlices(dd.getDay()); if (r <= 0) { runOut = dd; break; } dd = addDays(dd,1); }
-    }
-    return { latest, slices, consumed, remaining, runOut, daysAgo: Math.round((startOfDay(now) - parseDate(latest.date)) / 86400000) };
-  }
-
-  function plan(){
-    const st = stats();
-    const q = upcoming(st, 24);
-    if (!q.length) return { days: [], first: null };
-    const now = new Date();
-    const est = stockEstimate();
-    let stock = est ? Math.max(0, est.remaining) : 0;
-    const monday = addDays(startOfDay(now), -((now.getDay()+6)%7));
-    const today = localDate(now);
-    const days = [];
-    let qi = 0;
+  // Day-by-day projection from today: stock and balances move with expected eating; whoever is furthest behind buys.
+  function simulate(L, nDays){
+    const ms = members(), map = sliceMap();
+    const now = new Date(), today = localDate(now), sd = startDate();
+    const bal = {}, bought = {}, last = {};
+    L.rows.forEach(p => { bal[p.m.id] = p.balance; bought[p.m.id] = p.bought; last[p.m.id] = p.last; });
+    const eligible = ms.filter(eats);
+    const rank = list => list.slice().sort((a,b) => cmpKey([bal[a.id], bought[a.id], last[a.id], ms.indexOf(a)], [bal[b.id], bought[b.id], last[b.id], ms.indexOf(b)]))[0] || null;
+    const dayNeed = d => { const ds = localDate(d), jd = d.getDay(); return ms.reduce((a,m) => a + toEatOn(map, m, ds, jd), 0); };
     const loaf = slicesPerLoaf();
-    for (let i = 0; i < 28; i++) {
-      const d = addDays(monday, i);
-      const jd = d.getDay();
-      if (jd === 0 || jd === 6) continue;
+    const boughtDays = new Set(state.loaves.map(l => l.date));
+    let stock = Math.max(0, L.stock);
+    const days = [];
+    for (let i = 0; i < nDays; i++) {
+      const d = addDays(startOfDay(now), i), jd = d.getDay();
+      if (isWeekend(jd)) continue;
       const ds = localDate(d);
-      const sd = startDate();
-      const cell = { date: ds, jsDay: jd, past: ds < today || (ds === today && lunchDone()), today: ds === today, buyer: null, why: '', pre: !!sd && ds < sd };
-      if (!cell.past && !cell.pre) {
-        const need = dailySlices(jd);
-        // Slices needed today plus on the no-buy days that follow directly (Friday), so Thursday covers Friday.
-        let ahead = need;
-        for (let n = 1; n < 4; n++) { const nd = addDays(d, n).getDay(); if (nd === 0 || nd === 6) break; if (!NO_BUY_DAYS.includes(nd)) break; ahead += dailySlices(nd); }
-        if (!NO_BUY_DAYS.includes(jd)) {
-          let head = q[qi];
-          const headHere = head && inOffice(head.m, jd);
-          const preferred = headHere && Number(head.m.preferredDay) === jd;
+      const cell = { date: ds, jsDay: jd, today: ds === today, past: ds === today && lunchDone(), pre: !!sd && ds < sd, noBuy: NO_BUY_DAYS.includes(jd), buyer: null, why: '',
+        slices: ms.reduce((a,m) => a + plannedOn(map, m, ds, jd), 0) };
+      if (!cell.pre) {
+        const need = dayNeed(d);
+        if (!cell.past && !cell.noBuy && !boughtDays.has(ds) && eligible.length) {
+          // Slices needed today plus on the no-buy days that follow directly (Friday), so Thursday covers Friday.
+          let ahead = need;
+          for (let n = 1; n < 4; n++) { const nd = addDays(d, n); if (isWeekend(nd.getDay()) || !NO_BUY_DAYS.includes(nd.getDay())) break; ahead += dayNeed(nd); }
+          const head = rank(eligible);
           let buyer = null, why = '';
           if (stock < ahead && ahead > 0) {
-            let k = qi; while (k < q.length && !inOffice(q[k].m, jd)) k++;
-            if (k < q.length) { buyer = q[k]; why = k === qi ? (stock < need ? 'brødet tar slutt' : 'holder til fredag') : 'dekker for ' + head.m.name; q.splice(k,1); q.splice(qi,0,buyer); }
-          } else if (preferred && need > 0 && stock < ahead * 2 + 1) {
+            buyer = rank(eligible.filter(m => presentOn(map, m, ds, jd)));
+            if (buyer) why = buyer === head ? (stock < need ? 'brødet tar slutt' : 'holder til fredag') : 'dekker for ' + head.name;
+          } else if (presentOn(map, head, ds, jd) && Number(head.preferredDay) === jd && need > 0 && stock < ahead * 2 + 1) {
             buyer = head; why = 'foretrukket dag';
           }
-          if (buyer) { cell.buyer = buyer.m; cell.why = why; stock += loaf; qi++; }
-        } else {
-          cell.noBuy = true;
+          if (buyer) { cell.buyer = buyer; cell.why = why; stock += loaf; bal[buyer.id] += loaf; bought[buyer.id]++; last[buyer.id] = ds; }
         }
+        ms.forEach(m => { bal[m.id] -= toEatOn(map, m, ds, jd); });
         stock = Math.max(0, stock - need);
       }
       days.push(cell);
     }
-    return { days, first: days.find(c => c.buyer) || null };
+    return days;
   }
+
+  // When the stock runs out with no new loaf: the first day whose expected eating empties it.
+  function runOut(L){
+    if (L.stock <= 0) return null;
+    const ms = members(), map = sliceMap(), now = new Date();
+    let r = L.stock;
+    for (let i = 0; i < 42; i++) {
+      const d = addDays(startOfDay(now), i), jd = d.getDay(), ds = localDate(d);
+      if (isWeekend(jd)) continue;
+      r -= ms.reduce((a,m) => a + toEatOn(map, m, ds, jd), 0);
+      if (r <= 0) return d;
+    }
+    return null;
+  }
+
+  function model(){ const L = ledger(), sim = simulate(L, 140); return { L, sim, queue: sim.filter(c => c.buyer) }; }
+
+  // Even split of a stock change over all members. Leftover slices: +1 to the lowest contributors on an increase, −1 from the highest on a decrease.
+  function splitDelta(delta, rows){
+    const shares = {}; const n = rows.length; if (!n || !delta) return shares;
+    const sign = Math.sign(delta), abs = Math.abs(delta);
+    const base = Math.floor(abs / n), rest = abs - base * n;
+    rows.forEach(p => { shares[p.m.id] = sign * base; });
+    const order = rows.map((p, i) => ({ p, i })).sort((a, b) => (sign > 0 ? a.p.contributed - b.p.contributed : b.p.contributed - a.p.contributed) || a.i - b.i);
+    for (let k = 0; k < rest; k++) shares[order[k].p.m.id] += sign;
+    return shares;
+  }
+  const sharesText = shares => Object.entries(shares).filter(([, n]) => n).map(([id, n]) => `${nameOf(id)} ${signed(n)}`).join(', ');
 
   // ---------- render ----------
   function render(){
@@ -491,34 +525,35 @@ details > *:not(summary){margin-top:12px}
   function renderAlert(){
     const el = $('#alert');
     if (!state.ready || !members().length || beforeStart()) { el.hidden = true; return; }
-    const est = stockEstimate();
-    const p = plan();
-    if (est && est.remaining <= 0 && !(p.first && p.first.today)) {
-      el.hidden = false;
-      el.innerHTML = `<img src="${OUTLY_CRYING}" alt=""><div class="t"><b>Det siste brødet er nok oppspist.</b><span>Registrert ${esc(fmtDate(est.latest.date))} av ${esc(nameOf(est.latest.buyer))}, omtrent ${est.consumed} skiver siden. Enten er det kjøpt et nytt brød som ikke er registrert, eller så har ingen kjøpt ennå.</span><div class="actions"><button type="button" class="black small" data-act="log">Noen har kjøpt, registrer det</button></div></div>`;
+    const { L, sim } = model();
+    if (L.stock > 0) { el.hidden = true; return; }
+    const todayCell = sim[0] && sim[0].today ? sim[0] : null;
+    el.hidden = false;
+    if (todayCell && todayCell.buyer) {
+      el.innerHTML = `<img src="${OUTLY_CRYING}" alt=""><div class="t"><b>Ingen brød til lunsj med mindre noen kjøper i dag.</b><span>Planen sier ${esc(todayCell.buyer.name)}. Er det allerede kjøpt, registrer det, så forsvinner denne.</span><div class="actions"><button type="button" class="black small" data-act="log">Registrer et brød</button></div></div>`;
       return;
     }
-    if (est && est.remaining <= 0 && p.first && p.first.today) {
-      el.hidden = false;
-      el.innerHTML = `<img src="${OUTLY_CRYING}" alt=""><div class="t"><b>Ingen brød til lunsj med mindre noen kjøper i dag.</b><span>Planen sier ${esc(p.first.buyer.name)}. Er det allerede kjøpt, registrer det, så forsvinner denne.</span></div>`;
-      return;
-    }
-    el.hidden = true;
+    const why = L.stock < 0 ? `Det er registrert ${skiver(-L.stock)} mer spist enn kjøpt.` : 'Ifølge registreringene er det ingen skiver igjen.';
+    el.innerHTML = `<img src="${OUTLY_CRYING}" alt=""><div class="t"><b>Lageret er tomt.</b><span>${esc(why)} Er det kjøpt brød som ikke er registrert, registrer det. Stemmer ikke tallet, juster lageret.</span><div class="actions"><button type="button" class="black small" data-act="log">Registrer et brød</button><button type="button" class="small" data-act="adjust">Juster lageret</button></div></div>`;
   }
 
   function renderHero(){
     const note = $('#hero-note');
-    const bQuick = $('#btn-quick'), bLog = $('#btn-log');
-    const hideAll = () => { bQuick.hidden = bLog.hidden = true; };
-    if (state.unavailable) { note.textContent = 'Den felles loggen er bare synlig for innloggede medlemmer.'; hideAll(); return; }
+    const bLog = $('#btn-log');
+    if (state.unavailable) { note.textContent = 'Den felles loggen er bare synlig for innloggede medlemmer.'; bLog.hidden = true; return; }
     if (!state.ready) return;
-    if (!members().length) { note.textContent = 'Ingen medlemmer ennå. Åpne «Medlemmer og innstillinger» nederst og legg til alle.'; hideAll(); $('#settings').open = true; return; }
-    if (!upcoming(stats(), 1).length) { note.textContent = 'Gi hvert medlem noen skiver per dag og noen kontordager.'; hideAll(); return; }
+    if (!members().length) { note.textContent = 'Ingen medlemmer ennå. Åpne «Medlemmer og innstillinger» nederst og legg til alle.'; bLog.hidden = true; $('#settings').open = true; return; }
+    if (!members().some(eats)) { note.textContent = 'Gi hvert medlem noen skiver per dag og noen kontordager.'; bLog.hidden = true; return; }
     const canWrite = state.canWrite !== false;
-    bQuick.hidden = !canWrite || state.editing || !member(state.me) || beforeStart();
     bLog.hidden = !canWrite || state.editing;
     note.className = state.flash ? 'ok' : 'notice';
     note.textContent = state.flash || (canWrite ? '' : 'Du kan se loggen, men ikke legge til. Be eieren om bidragsyter-tilgang.');
+  }
+
+  function memberOptions(sel, preferId){
+    const cur = sel.value;
+    sel.innerHTML = members().map(m => `<option value="${esc(m.id)}">${esc(m.name || 'Uten navn')}</option>`).join('');
+    if (members().some(m => m.id === cur)) sel.value = cur; else if (preferId && member(preferId)) sel.value = preferId;
   }
 
   function renderEat(){
@@ -527,82 +562,112 @@ details > *:not(summary){margin-top:12px}
     card.hidden = false;
     const me = member(state.me);
     const map = sliceMap();
-    const today = localDate();
+    const now = new Date();
+    const today = localDate(now);
     const canWrite = state.canWrite !== false;
     $('#eat-me').hidden = !me || !canWrite;
     $('#eat-hint').hidden = !!me || !canWrite;
     if (me) {
       const logged = loggedOn(map, me.id, today);
-      if (!state.eatEditing) { state.eatVal = logged !== null ? logged : (inOffice(me, new Date().getDay()) ? Number(me.slicesPerDay)||0 : 0); }
+      if (!state.eatEditing) { state.eatVal = logged !== null ? logged : (inOffice(me, now.getDay()) ? usual(me) : 0); }
       $('#eat-val').textContent = state.eatVal;
-      $('#eat-label').textContent = logged !== null ? `Du har registrert ${logged} i dag. Endre:` : 'Hvor mange skiver spiste du i dag?';
+      $('#eat-label').textContent = isAbsent(map, me.id, today) ? 'Du er meldt borte i dag. Spiste du likevel?' : logged !== null ? `Du har registrert ${logged} i dag. Endre:` : 'Hvor mange skiver spiste du i dag?';
     }
     // Today, everyone
-    $('#eat-today').innerHTML = members().map(m => { const v = loggedOn(map, m.id, today); return `<span>${esc(m.name)}: <b>${v === null ? (inOffice(m, new Date().getDay()) ? 'ikke registrert' : 'ikke på kontoret') : v + ' skiver'}</b></span>`; }).join('');
+    $('#eat-today').innerHTML = members().map(m => {
+      const v = loggedOn(map, m.id, today);
+      const txt = isAbsent(map, m.id, today) ? 'borte' : v !== null ? skiver(v) : (inOffice(m, now.getDay()) ? 'ikke registrert' : 'ikke på kontoret');
+      return `<span>${esc(m.name)}: <b>${txt}</b></span>`;
+    }).join('');
     // This week table
-    const now = new Date();
-    const monday = addDays(startOfDay(now), -((now.getDay()+6)%7));
-    const days = WEEKDAYS.map(d => addDays(monday, d-1));
+    const days = WEEKDAYS.map(d => addDays(mondayOf(now), d-1));
     const sd = startDate();
     const head = `<tr><th></th>${days.map(d => `<th>${DAY_SHORT[d.getDay()]}<span class="dt">${pad(d.getDate())}.${pad(d.getMonth()+1)}.</span></th>`).join('')}<th>Sum</th></tr>`;
     const rows = members().map(m => {
       let sum = 0;
       const cells = days.map(d => {
-        const ds = localDate(d);
+        const ds = localDate(d), jd = d.getDay();
         const v = loggedOn(map, m.id, ds);
-        const future = ds > today || (ds === today && !lunchDone() && v === null);
-        const pre = sd && ds < sd;
         let txt, cls = ds === today ? 'tod' : '';
-        if (v !== null) { txt = v; sum += v; }
-        else if (pre || future) { txt = '·'; cls += ' est'; }
-        else if (inOffice(m, d.getDay())) { txt = Number(m.slicesPerDay)||0; sum += Number(m.slicesPerDay)||0; cls += ' est'; }
-        else { txt = '–'; cls += ' est'; }
+        if (isAbsent(map, m.id, ds)) { txt = 'borte'; cls += ' est'; }
+        else if (v !== null) { txt = v; if (ds <= today && !(sd && ds < sd)) sum += v; }
+        else if ((sd && ds < sd) || ds >= today) { txt = '·'; cls += ' est'; }
+        else { const n = eatenOn(map, m, ds, jd); txt = n || (inOffice(m, jd) ? 0 : '–'); sum += n; cls += ' est'; }
         return `<td class="${cls.trim()}">${txt}</td>`;
       }).join('');
       return `<tr><td>${esc(m.name)}</td>${cells}<td class="num">${sum}</td></tr>`;
     }).join('');
     $('#sl-table').innerHTML = head + rows;
-    // Late form options
-    const sel = $('#l-who'); const cur = sel.value;
-    sel.innerHTML = members().map(m => `<option value="${esc(m.id)}">${esc(m.name)}</option>`).join('');
-    if (members().some(m => m.id === cur)) sel.value = cur; else if (me) sel.value = me.id;
+    // Late form
+    memberOptions($('#l-who'), me && me.id);
     if (!$('#l-date').value) $('#l-date').value = localDate(addDays(now, -1));
     $('#l-date').min = sd && sd <= today ? sd : ''; $('#l-date').max = today;
     $('#late-box').hidden = !canWrite;
+    // Absence form
+    memberOptions($('#w-who'), me && me.id);
+    if (!$('#w-from').value) $('#w-from').value = today;
+    if (!$('#w-to').value) $('#w-to').value = $('#w-from').value;
+    $('#w-from').min = today; $('#w-to').min = $('#w-from').value || today;
+    $('#away-box').hidden = !canWrite;
   }
 
   function renderPlan(){
     const el = $('#week'), noteEl = $('#week-note');
     if (!state.ready) return;
-    const p = plan();
-    if (!p.days.length) { el.innerHTML = ''; noteEl.textContent = 'Legg til medlemmer for å få en plan.'; return; }
-    const weeks = [0,1,2,3].map(i => p.days.slice(i*5, i*5+5));
-    const wkLabel = (w,i) => (i === 0 ? 'Denne uka' : i === 1 ? 'Neste uke' : `Om ${i} uker`) + ` · ${fmtDate(w[0].date).slice(4)}–${fmtDate(w[4].date).slice(4)}`;
-    el.innerHTML = weeks.map((w,i) => `<div class="lbl">${wkLabel(w,i)}</div><div class="wk">${w.map(c => {
-      const cls = ['cell', c.buyer ? 'buy' : '', c.today ? 'today' : '', (c.past || c.pre) && !c.buyer ? 'past' : ''].filter(Boolean).join(' ');
-      const who = c.buyer ? esc(c.buyer.name) : (c.past || c.pre ? '' : '—');
-      const s = c.buyer ? c.why : (c.pre ? 'før start' : (c.noBuy ? `${dailySlices(c.jsDay)} skiver · aldri kjøp` : (dailySlices(c.jsDay) ? `${dailySlices(c.jsDay)} skiver` : 'ingen på jobb')));
-      return `<div class="${cls}"><span class="d">${DAY_SHORT[c.jsDay]}${c.today ? ' · i dag' : ''}</span><span class="n">${who}</span><span class="s">${esc(s)}</span></div>`;
+    $('#plan-today').hidden = !state.focus;
+    if (!members().some(eats)) { el.innerHTML = ''; noteEl.textContent = 'Legg til medlemmer for å få en plan.'; return; }
+    const { sim } = model();
+    const simBy = Object.fromEntries(sim.map(c => [c.date, c]));
+    const map = sliceMap(), ms = members(), sd = startDate();
+    const now = new Date(), today = localDate(now);
+    const boughtOn = {};
+    state.loaves.forEach(l => { (boughtOn[l.date] = boughtOn[l.date] || []).push(l); });
+    // Five weeks around the chosen date's week (default: this week). w counts weeks from this week.
+    const mid = state.focus ? Math.round((mondayOf(parseDate(state.focus)) - mondayOf(now)) / 604800000) : 0;
+    const weeks = [];
+    for (let w = mid - 2; w <= mid + 2; w++) weeks.push({ w, days: WEEKDAYS.map(d => addDays(mondayOf(now), w*7 + d-1)) });
+    const wkName = w => w === 0 ? 'Denne uka' : w === 1 ? 'Neste uke' : w === -1 ? 'Forrige uke' : w > 0 ? `Om ${w} uker` : `For ${-w} uker siden`;
+    el.innerHTML = weeks.map(({ w, days }) => `<div class="lbl">${wkName(w)} · ${fmtDate(localDate(days[0])).slice(4)}–${fmtDate(localDate(days[4])).slice(4)}</div><div class="wk">${days.map(d => {
+      const ds = localDate(d), jd = d.getDay();
+      const isToday = ds === today;
+      const actual = (boughtOn[ds] || []).map(l => nameOf(l.buyer));
+      let who, s, buy, dim;
+      if (ds < today) {
+        // History: who bought, and the slices counted that day.
+        const pre = sd && ds < sd;
+        const eaten = ms.reduce((a,m) => a + eatenOn(map, m, ds, jd), 0);
+        buy = actual.length > 0; dim = !buy;
+        who = actual.join(', ');
+        s = pre ? 'før start' : `${skiver(eaten)} spist`;
+      } else {
+        const c = simBy[ds] || { slices: 0 };
+        if (actual.length) { buy = true; who = actual.join(', '); s = 'kjøpt'; }
+        else if (c.buyer) { buy = true; who = c.buyer.name; s = c.why; }
+        else { buy = false; who = c.past || c.pre ? '' : '—'; s = c.pre ? 'før start' : (c.noBuy ? `${skiver(c.slices)} · aldri kjøp` : (c.slices ? skiver(c.slices) : 'ingen på jobb')); }
+        dim = !buy && (c.past || c.pre);
+      }
+      const cls = ['cell', buy ? 'buy' : '', isToday ? 'today' : '', dim ? 'past' : ''].filter(Boolean).join(' ');
+      return `<div class="${cls}"><span class="d">${DAY_SHORT[jd]}${isToday ? ' · i dag' : ''}</span><span class="n">${esc(who)}</span><span class="s">${esc(s)}</span></div>`;
     }).join('')}</div>`).join('');
-    noteEl.textContent = 'Beregnet ut fra siste brød og hvor mye klubben spiser. Planen flytter seg etter hvert som brød registreres; navnene følger rekkefølgen i regnskapet.';
+    noteEl.textContent = 'Beregnet ut fra lageret og hvor mye klubben spiser. Planen flytter seg etter hvert som brød, skiver og fravær registreres; den som ligger lengst bak i regnskapet kjøper først.';
   }
 
   function renderBalances(){
     const el = $('#balances');
     if (!state.ready) return;
-    const st = stats();
-    if (!st.length) { el.innerHTML = '<p class="empty">Legg til medlemmer under innstillinger.</p>'; return; }
-    const maxBought = Math.max(1, ...st.map(s => Math.max(s.bought, s.fair)));
-    el.innerHTML = st.map(s => {
-      const b = s.balance;
-      const chip = Math.abs(b) < 0.05 ? '<span class="chip">à jour</span>' : (b < 0 ? `<span class="chip behind">${fmt1(-b)} bak</span>` : `<span class="chip ahead">${fmt1(b)} foran</span>`);
-      const fillW = (s.bought / maxBought * 100).toFixed(1);
-      const tickL = (s.fair / maxBought * 100).toFixed(1);
-      const days = (s.m.days||[]).slice().sort().map(d => DAY_SHORT[d]).join(' ');
+    const { L } = model();
+    if (!L.rows.length) { el.innerHTML = '<p class="empty">Legg til medlemmer under innstillinger.</p>'; return; }
+    const max = Math.max(1, ...L.rows.map(p => Math.max(p.contributed, p.eaten)));
+    el.innerHTML = L.rows.map(p => {
+      const b = p.balance;
+      const chip = b === 0 ? '<span class="chip">à jour</span>' : (b < 0 ? `<span class="chip behind">${skiver(-b)} bak</span>` : `<span class="chip ahead">${skiver(b)} foran</span>`);
+      const fillW = (Math.max(0, p.contributed) / max * 100).toFixed(1);
+      const tickL = (Math.max(0, p.eaten) / max * 100).toFixed(1);
+      const days = (p.m.days||[]).slice().sort().map(d => DAY_SHORT[d]).join(' ');
       return `<div class="item">
-        <div class="head"><span class="name">${esc(s.m.name || 'Uten navn')}${state.me === s.m.id ? ' <span class="chip you">Deg</span>' : ''}</span>${chip}</div>
+        <div class="head"><span class="name">${esc(p.m.name || 'Uten navn')}${state.me === p.m.id ? ' <span class="chip you">Deg</span>' : ''}</span>${chip}</div>
         <div class="bar"><div class="fill" style="width:${fillW}%"></div><div class="tick" style="left:calc(${tickL}% - 1px)"></div></div>
-        <div class="figs"><span class="num">${s.bought} kjøpt</span><span class="num">rettferdig andel ${fmt1(s.fair)}</span><span class="num">${s.actual ? `${s.eaten} skiver spist` : `${s.weekly} skiver/uke`} (${Math.round(s.share*100)} %)</span><span>${esc(days) || 'ingen kontordager'}</span>${s.last ? `<span>sist: ${esc(fmtDate(s.last))}</span>` : ''}</div>
+        <div class="figs"><span class="num">${p.contributed} skiver bidratt (${p.bought} brød)</span><span class="num">${p.eaten} skiver spist</span><span>${esc(days) || 'ingen kontordager'}</span>${p.last ? `<span>sist kjøpt: ${esc(fmtDate(p.last))}</span>` : ''}</div>
       </div>`;
     }).join('');
   }
@@ -610,44 +675,59 @@ details > *:not(summary){margin-top:12px}
   function renderQueue(){
     const el = $('#queue');
     if (!state.ready) return;
-    const q = upcoming(stats(), 6);
-    el.innerHTML = q.length ? q.map((s,i) => `<li><span>${i === 0 ? 'Neste: ' : ''}${esc(s.m.name || 'Uten navn')}</span><small>${esc(prefLabel(s.m))}</small></li>`).join('') : '<li class="empty">Ingenting å planlegge ennå.</li>';
+    const q = model().queue.slice(0, 6);
+    el.innerHTML = q.length ? q.map((c,i) => `<li><span>${i === 0 ? 'Neste: ' : ''}${esc(c.buyer.name || 'Uten navn')}</span><small>${esc(fmtDate(c.date))}</small></li>`).join('') : '<li class="empty">Ingenting å planlegge ennå.</li>';
   }
 
   function renderStock(){
     const el = $('#stock');
     if (!state.ready) return;
-    const e = stockEstimate();
-    if (!e) { el.innerHTML = '<p class="empty">Ingen brød registrert ennå.</p>'; return; }
-    const sizeNote = e.slices !== slicesPerLoaf() ? ` (${e.slices} skiver)` : '';
-    const ago = e.daysAgo === 0 ? 'i dag' : e.daysAgo === 1 ? 'i går' : `for ${e.daysAgo} dager siden`;
-    let tone, dot, lbl, body;
-    if (e.consumed <= 0) { tone = 'in'; dot = 'var(--stock-in)'; lbl = 'Ferskt brød'; body = `Urørt så langt; det bør holde til rundt ${e.runOut ? DAY_LONG[e.runOut.getDay()] : 'neste uke'}.`; }
-    else if (e.remaining <= 0) { tone = 'out'; dot = 'var(--error)'; lbl = 'Trolig oppspist'; body = `Omtrent ${e.consumed} skiver spist siden da.`; }
-    else if (e.runOut && (e.runOut - startOfDay(new Date())) <= 86400000) { tone = 'soon'; dot = 'var(--warning)'; lbl = `Tar slutt ${e.runOut.getDay() === new Date().getDay() ? 'i dag' : 'i morgen'}`; body = `Omtrent ${e.remaining} av ${e.slices} skiver igjen.`; }
-    else { tone = 'in'; dot = 'var(--stock-in)'; lbl = 'Fortsatt brød'; body = `Omtrent ${e.remaining} av ${e.slices} skiver igjen; tar slutt rundt ${e.runOut ? DAY_LONG[e.runOut.getDay()] + ' lunsj' : 'neste uke'}.`; }
-    el.innerHTML = `<span class="dot" style="background:${dot}"></span><div><span class="lbl ${tone}">${esc(lbl)}</span><br>Kjøpt ${esc(fmtDate(e.latest.date))} (${ago}) av ${esc(nameOf(e.latest.buyer))}${sizeNote}. ${esc(body)}<br><span class="notice">Anslag ut fra klubbens vanlige forbruk, ikke en telling.</span></div>`;
+    const { L } = model();
+    const n = L.stock;
+    const ro = runOut(L);
+    const todayStart = startOfDay(new Date());
+    let tone, dot, lbl;
+    if (n <= 0) { tone = 'out'; dot = 'var(--error)'; lbl = 'Tomt'; }
+    else if (ro && ro - todayStart <= 86400000) { tone = 'soon'; dot = 'var(--warning)'; lbl = `Tar slutt ${+ro === +todayStart ? 'i dag' : 'i morgen'}`; }
+    else { tone = 'in'; dot = 'var(--stock-in)'; lbl = ro ? `Holder til rundt ${DAY_LONG[ro.getDay()]} lunsj` : 'Holder over en uke'; }
+    const latest = loaves()[0];
+    const latestTxt = latest ? `Siste brød: ${fmtDate(latest.date)} av ${nameOf(latest.buyer)} (${skiver(loafSize(latest))}).` : 'Ingen brød registrert ennå.';
+    const canAdj = state.canWrite !== false && $('#adj-form').hidden;
+    el.innerHTML = `<div class="stock-head"><span class="big">${n}</span><span class="unit">${Math.abs(n) === 1 ? 'skive' : 'skiver'}</span>${canAdj ? '<button type="button" class="small" id="adj-open">Juster</button>' : ''}</div>
+      <div class="stock"><span class="dot" style="background:${dot}"></span><div><span class="lbl ${tone}">${esc(lbl)}</span><br>${esc(latestTxt)}<br><span class="notice">Alle registrerte brød minus alle registrerte skiver.</span></div></div>`;
+  }
+
+  function logItems(){
+    const items = [];
+    state.loaves.forEach(l => items.push({ kind:'loaves', id:l.id, date:l.date, ts:l.createdAt || '', r:l }));
+    state.slices.forEach(r => items.push({ kind:'slices', id:r.id, date:r.date, ts:r.updatedAt || '', r }));
+    state.adjustments.forEach(a => items.push({ kind:'adjustments', id:a.id, date:a.date, ts:a.createdAt || '', r:a }));
+    items.sort((a,b) => (b.date > a.date) - (b.date < a.date) || String(b.ts).localeCompare(String(a.ts)));
+    return items;
   }
 
   function renderLog(){
     const el = $('#log');
     if (!state.ready) return;
     const sd = startDate();
-    if (!state.loaves.length) { el.innerHTML = `<li class="emptyl"><img src="${OUTLY_SEARCHING}" alt=""></li>`; return; }
+    const items = logItems();
+    if (!items.length) { el.innerHTML = `<li class="emptyl"><img src="${OUTLY_SEARCHING}" alt=""></li>`; return; }
     const canDel = state.canWrite !== false;
-    el.innerHTML = state.loaves.slice(0, 60).map(l => `<li data-id="${esc(l.id)}">
-      <div class="l"><span>${esc(nameOf(l.buyer))}${sd && l.date < sd ? ' <span class="chip">før start, teller ikke</span>' : ''}</span><small>${esc(fmtDate(l.date))}${l.slices && Number(l.slices) !== slicesPerLoaf() ? ` · ${esc(l.slices)} skiver` : ''}${l.note ? ' · ' + esc(l.note) : ''}</small></div>
+    const pre = ds => sd && ds < sd ? ' <span class="chip">før start, teller ikke</span>' : '';
+    el.innerHTML = items.slice(0, 60).map(it => {
+      const r = it.r;
+      let title, small;
+      if (it.kind === 'loaves') { title = `${esc(nameOf(r.buyer))} kjøpte brød${pre(r.date)}`; small = `${esc(fmtDate(r.date))} · +${esc(skiver(loafSize(r)))}${r.note ? ' · ' + esc(r.note) : ''}`; }
+      else if (it.kind === 'slices') { title = r.absent ? `${esc(nameOf(r.member))} er borte${pre(r.date)}` : `${esc(nameOf(r.member))} spiste ${esc(skiver(Number(r.slices) || 0))}${pre(r.date)}`; small = esc(fmtDate(r.date)); }
+      else { title = `Lageret justert fra ${esc(r.from)} til ${esc(r.to)}`; small = `${esc(fmtDate(r.date))} · ${esc(sharesText(r.shares || {})) || 'ingen fordeling'}`; }
+      return `<li data-id="${esc(it.id)}" data-kind="${it.kind}">
+      <div class="l"><span>${title}</span><small>${small}</small></div>
       ${canDel ? '<button type="button" class="small del">Fjern</button>' : ''}
-    </li>`).join('');
+    </li>`;
+    }).join('');
   }
 
-  function renderForm(){
-    const sel = $('#f-buyer');
-    const current = sel.value;
-    const ms = members();
-    sel.innerHTML = ms.map(m => `<option value="${esc(m.id)}">${esc(m.name || 'Uten navn')}</option>`).join('');
-    if (ms.some(m => m.id === current)) sel.value = current;
-  }
+  function renderForm(){ memberOptions($('#f-buyer')); }
 
   function renderSettings(){
     if (!state.ready) return;
@@ -689,38 +769,47 @@ details > *:not(summary){margin-top:12px}
     }));
     const spl = Math.max(1, Math.round(Number($('#s-spl').value) || 18));
     const sdv = $('#s-start').value;
-    return { slicesPerLoaf: spl, members: ms, whatToBuy: $('#s-buy').value.trim(), startDate: /^\d{4}-\d{2}-\d{2}$/.test(sdv) ? sdv : '' };
+    return { slicesPerLoaf: spl, members: ms, whatToBuy: $('#s-buy').value.trim(), startDate: isDate(sdv) ? sdv : '' };
   }
 
+  // ---------- writes ----------
+  const NO_ACCESS = 'Du har ikke skrivetilgang til loggen.';
+  const SAVE_FAIL = 'Kunne ikke lagre. Prøv igjen om et øyeblikk.';
+  const failMsg = ex => ex && ex.code === 'permission-denied' ? NO_ACCESS : SAVE_FAIL;
   async function saveLoaf(buyer, date, slices, note){
     await state.db.collection('loaves').add({ buyer, date, slices, note, createdAt: new Date().toISOString() });
   }
+  async function saveSlices(mId, date, n){
+    await state.db.doc('slices/' + date + '_' + mId).set({ member: mId, date, slices: n, updatedAt: new Date().toISOString() });
+  }
+  async function saveAbsence(mId, date){
+    await state.db.doc('slices/' + date + '_' + mId).set({ member: mId, date, slices: 0, absent: true, updatedAt: new Date().toISOString() });
+  }
   function flash(msg){ state.flash = msg; renderHero(); setTimeout(() => { state.flash = ''; renderHero(); }, 4000); }
+  const validLoafSlices = v => { const n = Number(v); return v !== '' && Number.isInteger(n) && n >= 1 && n <= 60; };
+  function syncLoafSave(){ $('#f-save').disabled = !validLoafSlices($('#f-slices').value); }
   function openForm(buyerId, date){
     state.editing = true;
     $('#log-form').hidden = false;
     $('#f-date').value = date || (beforeStart() ? startDate() : localDate());
     $('#f-date').min = startDate() || '';
-    $('#f-slices').value = slicesPerLoaf();
+    $('#f-slices').value = '';
     $('#f-note').value = '';
     $('#f-err').textContent = '';
-    const b = buyerId || state.me || (upcoming(stats(), 1)[0] || {m:{}}).m.id;
+    syncLoafSave();
+    const b = buyerId || state.me || ((model().queue[0] || {}).buyer || {}).id;
     if (b) $('#f-buyer').value = b;
     renderHero();
     $('#f-buyer').focus();
   }
-  const NO_ACCESS = 'Du har ikke skrivetilgang til loggen.';
-  const SAVE_FAIL = 'Kunne ikke lagre. Prøv igjen om et øyeblikk.';
-  async function saveSlices(mId, date, n){
-    await state.db.doc('slices/' + date + '_' + mId).set({ member: mId, date, slices: n, updatedAt: new Date().toISOString() });
-  }
+
   $('#eat-minus').addEventListener('click', () => { state.eatEditing = true; state.eatVal = Math.max(0, (state.eatVal||0) - 1); $('#eat-val').textContent = state.eatVal; });
   $('#eat-plus').addEventListener('click', () => { state.eatEditing = true; state.eatVal = Math.min(30, (state.eatVal||0) + 1); $('#eat-val').textContent = state.eatVal; });
   $('#eat-save').addEventListener('click', async () => {
     if (!state.db || !state.me) return;
     const btn = $('#eat-save'); btn.disabled = true; const note = $('#eat-note'); note.className = 'notice'; note.textContent = '';
     try { await saveSlices(state.me, localDate(), state.eatVal||0); state.eatEditing = false; note.className = 'ok'; note.textContent = 'Registrert!'; setTimeout(() => { note.textContent = ''; }, 3000); }
-    catch (ex) { note.className = 'err'; note.textContent = ex && ex.code === 'permission-denied' ? NO_ACCESS : SAVE_FAIL; }
+    catch (ex) { note.className = 'err'; note.textContent = failMsg(ex); }
     finally { btn.disabled = false; }
   });
   $('#late-form').addEventListener('submit', async e => {
@@ -729,10 +818,69 @@ details > *:not(summary){margin-top:12px}
     const who = $('#l-who').value, date = $('#l-date').value, n = Math.round(Number($('#l-slices').value));
     const err = $('#l-err'); err.className = 'err'; err.textContent = '';
     if (!who) { err.textContent = 'Velg hvem.'; return; }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date > localDate()) { err.textContent = 'Velg en dato som har vært.'; return; }
-    if (!(n >= 0)) { err.textContent = 'Skriv antall skiver.'; return; }
-    try { await saveSlices(who, date, n); err.className = 'ok'; err.textContent = `Lagret: ${nameOf(who)}, ${n} skiver ${fmtDate(date)}.`; $('#l-slices').value = ''; }
-    catch (ex) { err.textContent = ex && ex.code === 'permission-denied' ? NO_ACCESS : SAVE_FAIL; }
+    if (!isDate(date) || date > localDate()) { err.textContent = 'Velg en dato som har vært.'; return; }
+    if ($('#l-slices').value === '' || !(n >= 0)) { err.textContent = 'Skriv antall skiver.'; return; }
+    try { await saveSlices(who, date, n); err.className = 'ok'; err.textContent = `Lagret: ${nameOf(who)}, ${skiver(n)} ${fmtDate(date)}.`; $('#l-slices').value = ''; }
+    catch (ex) { err.textContent = failMsg(ex); }
+  });
+  $('#w-from').addEventListener('change', () => { const f = $('#w-from').value; if (isDate(f) && (!isDate($('#w-to').value) || $('#w-to').value < f)) $('#w-to').value = f; $('#w-to').min = f; });
+  $('#away-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!state.db) return;
+    const who = $('#w-who').value, from = $('#w-from').value, to = $('#w-to').value;
+    const err = $('#w-err'); err.className = 'err'; err.textContent = '';
+    const m = member(who);
+    if (!m) { err.textContent = 'Velg hvem.'; return; }
+    if (!isDate(from) || !isDate(to)) { err.textContent = 'Velg fra- og til-dato.'; return; }
+    if (from < localDate()) { err.textContent = 'Velg i dag eller senere.'; return; }
+    if (to < from) { err.textContent = 'Til-datoen må være samme dag eller etter fra-datoen.'; return; }
+    const map = sliceMap(), dates = [];
+    for (let d = parseDate(from); localDate(d) <= to; d = addDays(d, 1)) {
+      const ds = localDate(d);
+      // Office days only, and never over slices already registered.
+      if (inOffice(m, d.getDay()) && (loggedOn(map, m.id, ds) === null || isAbsent(map, m.id, ds))) dates.push(ds);
+    }
+    if (!dates.length) { err.textContent = `${m.name} har ingen kontordager uten registrering i perioden.`; return; }
+    try {
+      await Promise.all(dates.map(ds => saveAbsence(m.id, ds)));
+      err.className = 'ok';
+      err.textContent = `Lagret: ${m.name} er borte ${dates.length === 1 ? fmtDate(dates[0]) : `${dates.length} kontordager, ${fmtDate(dates[0])}–${fmtDate(dates[dates.length-1])}`}. Angres i Logg.`;
+    } catch (ex) { err.textContent = failMsg(ex); }
+  });
+
+  // Stock correction
+  function adjPreview(){
+    const v = $('#a-val').value, n = Number(v);
+    const ok = v !== '' && Number.isInteger(n) && n >= 0 && n <= 999;
+    const { L } = model();
+    const delta = ok ? n - L.stock : 0;
+    $('#a-save').disabled = !ok || delta === 0;
+    $('#a-preview').textContent = ok && delta ? `Endring ${signed(delta)}: ${sharesText(splitDelta(delta, L.rows))}` : '';
+  }
+  function openAdjust(){
+    $('#adj-form').hidden = false; $('#a-val').value = ''; $('#a-err').textContent = ''; adjPreview(); renderStock();
+    $('#adj-form').closest('section').scrollIntoView({ block: 'nearest' });
+    $('#a-val').focus();
+  }
+  function closeAdjust(){ $('#adj-form').hidden = true; renderStock(); }
+  $('#stock').addEventListener('click', e => { if (e.target.closest('#adj-open')) openAdjust(); });
+  $('#a-val').addEventListener('input', adjPreview);
+  $('#a-cancel').addEventListener('click', closeAdjust);
+  $('#adj-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!state.db) return;
+    const err = $('#a-err'); err.textContent = '';
+    const v = $('#a-val').value, n = Number(v);
+    if (v === '' || !Number.isInteger(n) || n < 0) { err.textContent = 'Skriv antall skiver som faktisk er igjen.'; return; }
+    if (!state.adjOk) { err.textContent = 'Lagerjustering er ikke slått på i databasen ennå.'; return; }
+    const { L } = model();
+    const delta = n - L.stock;
+    if (!delta) { closeAdjust(); return; }
+    const btn = $('#a-save'); btn.disabled = true;
+    try {
+      await state.db.collection('adjustments').add({ date: localDate(), from: L.stock, to: n, delta, shares: splitDelta(delta, L.rows), by: state.me || '', createdAt: new Date().toISOString() });
+      closeAdjust(); flash(`Lageret er justert til ${skiver(n)}.`);
+    } catch (ex) { err.textContent = ex && ex.code === 'permission-denied' ? 'Lagerjustering er ikke slått på i databasen ennå.' : SAVE_FAIL; btn.disabled = false; }
   });
 
   // ---------- events ----------
@@ -742,44 +890,45 @@ details > *:not(summary){margin-top:12px}
     try { if (state.me) localStorage.setItem(LS_KEY, state.me); else localStorage.removeItem(LS_KEY); } catch (_) {}
     render();
   });
-  $('#alert').addEventListener('click', e => { if (e.target.closest('[data-act="log"]')) openForm(); });
+  $('#alert').addEventListener('click', e => { if (e.target.closest('[data-act="log"]')) openForm(); if (e.target.closest('[data-act="adjust"]')) openAdjust(); });
   $('#btn-log').addEventListener('click', () => openForm());
-  $('#f-yesterday').addEventListener('click', () => { $('#f-date').value = localDate(addDays(new Date(), -1)); });
-  $('#f-cancel').addEventListener('click', () => { state.editing = false; $('#log-form').hidden = true; renderHero(); });
-  $('#btn-quick').addEventListener('click', async () => {
-    if (!state.db || !state.me) return;
-    const btn = $('#btn-quick'); btn.disabled = true;
-    try { await saveLoaf(state.me, localDate(), slicesPerLoaf(), ''); flash('Registrert. Takk, ' + nameOf(state.me) + '!'); }
-    catch (ex) { flash(''); $('#hero-note').textContent = ex && ex.code === 'permission-denied' ? NO_ACCESS : SAVE_FAIL; if (ex && ex.code === 'permission-denied') { state.canWrite = false; render(); } }
-    finally { btn.disabled = false; }
+  $('#plan-past').addEventListener('click', () => {
+    const i = $('#plan-date'); $('#plan-past').hidden = true; i.hidden = false;
+    i.max = localDate(); i.value = state.focus || localDate(); i.focus();
+    try { i.showPicker(); } catch (_) {}
   });
+  $('#plan-date').addEventListener('change', e => { if (isDate(e.target.value)) { state.focus = e.target.value; renderPlan(); } });
+  $('#plan-today').addEventListener('click', () => { state.focus = ''; $('#plan-date').hidden = true; $('#plan-past').hidden = false; renderPlan(); });
+  $('#f-slices').addEventListener('input', syncLoafSave);
+  $('#f-cancel').addEventListener('click', () => { state.editing = false; $('#log-form').hidden = true; renderHero(); });
 
   $('#log-form').addEventListener('submit', async e => {
     e.preventDefault();
     if (!state.db) return;
     const buyer = $('#f-buyer').value, date = $('#f-date').value;
-    const slices = Math.round(Number($('#f-slices').value)) || slicesPerLoaf();
+    const sv = $('#f-slices').value;
     const note = $('#f-note').value.trim();
     const err = $('#f-err');
     if (!buyer) { err.textContent = 'Velg hvem som kjøpte.'; return; }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { err.textContent = 'Velg en dato.'; return; }
+    if (!isDate(date)) { err.textContent = 'Velg en dato.'; return; }
     if (startDate() && date < startDate()) { err.textContent = `Klubben starter ${fmtDate(startDate())}. Brød før det teller ikke.`; return; }
+    if (!validLoafSlices(sv)) { err.textContent = 'Skriv hvor mange skiver brødet har (1–60).'; return; }
     const btn = $('#f-save'); btn.disabled = true; err.textContent = '';
     try {
-      await saveLoaf(buyer, date, slices, note);
+      await saveLoaf(buyer, date, Number(sv), note);
       state.editing = false; $('#log-form').hidden = true; flash('Registrert.');
     } catch (ex) {
-      err.textContent = ex && ex.code === 'permission-denied' ? NO_ACCESS : SAVE_FAIL;
+      err.textContent = failMsg(ex);
       if (ex && ex.code === 'permission-denied') { state.canWrite = false; render(); }
-    } finally { btn.disabled = false; }
+    } finally { syncLoafSave(); }
   });
 
   $('#log').addEventListener('click', async e => {
     const btn = e.target.closest('button.del'); if (!btn || !state.db) return;
-    const li = btn.closest('li'); const id = li && li.dataset.id; if (!id) return;
+    const li = btn.closest('li'); const id = li && li.dataset.id, kind = li && li.dataset.kind; if (!id || !['loaves','slices','adjustments'].includes(kind)) return;
     if (btn.dataset.armed !== '1') { btn.dataset.armed = '1'; btn.textContent = 'Bekreft fjerning'; btn.classList.add('danger'); setTimeout(() => { btn.dataset.armed = ''; btn.textContent = 'Fjern'; btn.classList.remove('danger'); }, 4000); return; }
     btn.disabled = true;
-    try { await state.db.collection('loaves').doc(id).delete(); }
+    try { await state.db.collection(kind).doc(id).delete(); }
     catch (ex) { btn.disabled = false; btn.textContent = 'Kunne ikke fjerne'; }
   });
 
@@ -829,19 +978,24 @@ details > *:not(summary){margin-top:12px}
     const db = firebase.firestore();
     state.db = db;
     state.canWrite = true;
-    let gotSettings = false, gotLoaves = false, gotSlices = false;
-    const maybeReady = () => { if (gotSettings && gotLoaves && gotSlices) { state.ready = true; render(); } };
+    const got = { settings:false, loaves:false, slices:false, adjustments:false };
+    const update = key => { got[key] = true; if (Object.values(got).every(Boolean)) { state.ready = true; render(); } };
     const lost = () => { $('#hero-note').textContent = 'Mistet kontakten med den felles loggen. Last siden på nytt.'; };
-    db.doc('club/settings').onSnapshot(snap => { state.settings = snap.exists ? snap.data() : null; gotSettings = true; maybeReady(); }, lost);
-    db.collection('loaves').orderBy('date', 'desc').limit(500).onSnapshot(snap => {
+    db.doc('club/settings').onSnapshot(snap => { state.settings = snap.exists ? snap.data() : null; update('settings'); }, lost);
+    db.collection('loaves').onSnapshot(snap => {
       const rows = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
       rows.sort((a,b) => (b.date > a.date) - (b.date < a.date) || String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
-      state.loaves = rows; gotLoaves = true; maybeReady();
+      state.loaves = rows; update('loaves');
     }, lost);
-    db.collection('slices').orderBy('date', 'desc').limit(1000).onSnapshot(snap => {
+    db.collection('slices').onSnapshot(snap => {
       state.slices = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
-      gotSlices = true; maybeReady();
+      update('slices');
     }, lost);
+    // Stock corrections. If the database rules do not allow this collection yet, the page still works without it.
+    db.collection('adjustments').onSnapshot(snap => {
+      state.adjustments = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+      state.adjOk = true; update('adjustments');
+    }, () => { state.adjustments = []; state.adjOk = false; update('adjustments'); });
     setInterval(() => { if (state.ready && !state.editing) render(); }, 15 * 60 * 1000);
   }
   boot();

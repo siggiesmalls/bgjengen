@@ -1,7 +1,7 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // No login: anyone with the page can read and write the club's three data sets, nothing else.
+    // No login: anyone with the page can read and write the club's four data sets, nothing else.
     match /club/settings {
       allow read, write: if true;
     }
@@ -9,6 +9,9 @@ service cloud.firestore {
       allow read, write: if true;
     }
     match /slices/{id} {
+      allow read, write: if true;
+    }
+    match /adjustments/{id} {
       allow read, write: if true;
     }
   }
