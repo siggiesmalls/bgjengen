@@ -1,5 +1,9 @@
 # B-gjengen — Outland HQ bread club
 
+**Moved 2026-11-03:** the app lives in `siggiesmalls/vibe-check` (`b-gjengen/`).
+Do not edit it here. This repo only redirects old links and keeps `cal/*.ics`
+updated for old calendar subscriptions (the job reads the new page).
+
 Single-page app (Norwegian bokmål) for three colleagues who share lunch loaves.
 It tracks who bought which loaf, how many slices each person ate, and works out
 whose turn it is next. Built as a claude.ai artifact; this repo is the port to

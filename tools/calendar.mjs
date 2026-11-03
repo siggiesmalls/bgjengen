@@ -3,7 +3,7 @@
 import { chromium } from 'playwright';
 import { mkdirSync, writeFileSync } from 'node:fs';
 
-const url = process.argv[2] || 'https://siggiesmalls.github.io/bgjengen/';
+const url = process.argv[2] || 'https://siggiesmalls.github.io/vibe-check/b-gjengen/';
 const out = process.argv[3] || 'cal';
 const osloDate = t => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Oslo' }).format(t);
 const until = osloDate(Date.now() + 28 * 86400000);
